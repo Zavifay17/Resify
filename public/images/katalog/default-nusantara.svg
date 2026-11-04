@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="Ilustrasi placeholder katalog kuliner Nusantara">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f1b33"/>
+      <stop offset="55%" stop-color="#132a3f"/>
+      <stop offset="100%" stop-color="#0b2b26"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <pattern id="batik" width="64" height="64" patternUnits="userSpaceOnUse" patternTransform="rotate(18)">
+      <path d="M16 4c7 8 7 20 0 28-7-8-7-20 0-28z" fill="none" stroke="#ffffff" stroke-opacity=".10" stroke-width="1.6"/>
+      <circle cx="48" cy="44" r="4.5" fill="none" stroke="#ffffff" stroke-opacity=".09" stroke-width="1.6"/>
+      <path d="M40 12q8 8 0 16-8-8 0-16z" fill="none" stroke="#ffffff" stroke-opacity=".07" stroke-width="1.4"/>
+      <path d="M8 52c6-4 12-4 18 0" fill="none" stroke="#ffffff" stroke-opacity=".07" stroke-width="1.4"/>
+    </pattern>
+  </defs>
+
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <rect width="800" height="600" fill="url(#batik)"/>
+
+  <!-- Piring & mangkuk stilir -->
+  <g transform="translate(400 250)">
+    <circle r="132" fill="none" stroke="url(#ring)" stroke-opacity=".55" stroke-width="2.5"/>
+    <circle r="104" fill="#0b1220" fill-opacity=".55" stroke="#ffffff" stroke-opacity=".16" stroke-width="1.5"/>
+    <g stroke="#e2e8f0" stroke-opacity=".55" stroke-width="4" fill="none" stroke-linecap="round">
+      <path d="M-38 -18v52M-38 -18c0 10 3 14 3 18M-28 -22v56M-48 -22v56"/>
+      <path d="M34 -34c14 10 16 34 2 46-10 8-22 4-24-6-3-13 10-22 22-40z" stroke-opacity=".45"/>
+      <path d="M12 22l26 26" stroke-opacity=".45"/>
+    </g>
+  </g>
+
+  <g font-family="'Segoe UI', system-ui, sans-serif" text-anchor="middle">
+    <text x="400" y="452" fill="#f8fafc" font-size="30" font-weight="700" letter-spacing="1">Belum Ada Foto Hidangan</text>
+    <text x="400" y="486" fill="#94a3b8" font-size="16">Foto akan terisi otomatis dari arsip gambar terbuka,</text>
+    <text x="400" y="508" fill="#94a3b8" font-size="16">atau unggah lewat fitur Vision AI.</text>
+    <text x="400" y="552" fill="#10b981" font-size="13" font-weight="700" letter-spacing="4">RESEPIFY · KULINER NUSANTARA</text>
+  </g>
+</svg>
