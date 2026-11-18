@@ -414,7 +414,7 @@
                             </span>
                         </template>
                     </button>
-                    <span class="hint">Diuji dengan memanggil endpoint <span class="mono">/rest/v1/</span>.</span>
+                    <span class="hint">Diuji dengan memanggil endpoint <span class="mono">/rest/v1/</span> dan <span class="mono">/storage/v1/bucket/</span>.</span>
                 </div>
 
                 <template x-if="supabaseResult">

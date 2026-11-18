@@ -504,6 +504,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
 .table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .table .actions { text-align: right; white-space: nowrap; }
 .table .actions .btn { margin-left: 4px; }
+/* Baris arsip: bahan kedaluwarsa > 1 hari tetap terbaca tapi bukan stok aktif */
+.table tbody tr.is-archived { background: #fbfbfc; }
+.table tbody tr.is-archived td { color: var(--muted); }
+.table tbody tr.is-archived td:first-child { box-shadow: inset 3px 0 0 var(--muted-soft); }
 
 /* ------------------------------------------------------------------ alerts */
 .alert { display: flex; gap: 11px; padding: 13px 15px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--bg-alt); font-size: 14px; }

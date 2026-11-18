@@ -172,6 +172,13 @@
                     <div>
                         <h3><span class="chip chip-brand" style="margin-right:8px">1</span>Pilih Bahan dari Inventaris Dapur Anda</h3>
                         <p class="hint mb-0">Centang bahan makanan yang ingin Anda gunakan dalam masakan ini.</p>
+                        @if(($jumlahArsip ?? 0) > 0)
+                            <p class="hint mb-0">
+                                {{ $jumlahArsip }} bahan sudah diarsipkan karena lewat kedaluwarsa lebih dari 1 hari dan
+                                tidak ditampilkan di sini.
+                                <a href="{{ route('inventory.index', ['status' => 'archived']) }}" class="strong">Lihat arsip</a>.
+                            </p>
+                        @endif
                     </div>
                     <div class="flex-center gap-8">
                         <button type="button" @click="selectAllExpiring()" class="btn btn-secondary btn-sm">
@@ -217,6 +224,10 @@
                         @empty
                             <div class="empty" style="grid-column: 1 / -1; padding: 24px 12px;">
                                 Inventaris Anda kosong. <a href="{{ route('inventory.index') }}" class="strong">Tambahkan bahan makanan terlebih dahulu</a>.
+                                @if(($jumlahArsip ?? 0) > 0)
+                                    <div class="mt-8">Atau periksa {{ $jumlahArsip }} bahan berarsip kedaluwarsa
+                                        <a href="{{ route('inventory.index', ['status' => 'archived']) }}" class="strong">di halaman arsip</a>.</div>
+                                @endif
                             </div>
                         @endforelse
                     </div>

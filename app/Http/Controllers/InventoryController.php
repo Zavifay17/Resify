@@ -25,6 +25,8 @@ class InventoryController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        $this->inventoryService->arsipkanBahanKadaluarsa($user->id);
+
         $query = KitchenInventory::where('user_id', $user->id);
 
         // Search
@@ -51,6 +53,10 @@ class InventoryController extends Controller
                 $query->whereDate('expiration_date', '<', Carbon::today());
             } elseif ($request->status === 'safe') {
                 $query->whereDate('expiration_date', '>', Carbon::today()->addDays(3));
+            } elseif ($request->status === 'archived') {
+                $query->whereNotNull('archived_at');
+            } elseif ($request->status === 'active') {
+                $query->whereNull('archived_at');
             }
         }
 
@@ -114,6 +120,11 @@ class InventoryController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
+        // Tanggal baru yang masih masuk toleransi otomatis mengeluarkan bahan dari arsip
+        if (Carbon::parse($validated['expiration_date'])->gte(InventoryService::tanggalBatasArsip())) {
+            $validated['archived_at'] = null;
+        }
+
         $item->update($validated);
 
         if ($this->supabaseService->isConfigured()) {
@@ -148,7 +159,10 @@ class InventoryController extends Controller
     public function printReport()
     {
         $user = Auth::user();
-        $items = KitchenInventory::where('user_id', $user->id)->orderBy('expiration_date', 'asc')->get();
+        $items = KitchenInventory::where('user_id', $user->id)
+            ->active()
+            ->orderBy('expiration_date', 'asc')
+            ->get();
         $stats = $this->inventoryService->getDashboardStats($user->id);
 
         return view('inventory.print', compact('items', 'stats', 'user'));

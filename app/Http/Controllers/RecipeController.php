@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\KitchenInventory;
 use App\Models\RecipeCache;
 use App\Services\GeminiService;
+use App\Services\InventoryService;
 use App\Services\RecipeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,11 +16,16 @@ class RecipeController extends Controller
 {
     protected RecipeService $recipeService;
     protected GeminiService $geminiService;
+    protected InventoryService $inventoryService;
 
-    public function __construct(RecipeService $recipeService, GeminiService $geminiService)
-    {
+    public function __construct(
+        RecipeService $recipeService,
+        GeminiService $geminiService,
+        InventoryService $inventoryService
+    ) {
         $this->recipeService = $recipeService;
         $this->geminiService = $geminiService;
+        $this->inventoryService = $inventoryService;
     }
 
     /**
@@ -28,16 +34,21 @@ class RecipeController extends Controller
     public function generator(Request $request)
     {
         $user = Auth::user();
+        $this->inventoryService->arsipkanBahanKadaluarsa($user->id);
+
         $inventoryItems = KitchenInventory::where('user_id', $user->id)
+            ->active()
             ->orderBy('expiration_date', 'asc')
             ->get();
+
+        $jumlahArsip = KitchenInventory::where('user_id', $user->id)->archived()->count();
 
         $preselected = $request->query('items', []);
         if (is_string($preselected)) {
             $preselected = explode(',', $preselected);
         }
 
-        return view('recipes.generator', compact('inventoryItems', 'user', 'preselected'));
+        return view('recipes.generator', compact('inventoryItems', 'user', 'preselected', 'jumlahArsip'));
     }
 
     /**
@@ -56,7 +67,15 @@ class RecipeController extends Controller
             'diet' => 'nullable|array',
         ]);
 
-        $ingredients = $request->ingredients;
+        $ingredients = $this->saringBahanArsip($user->id, $request->ingredients);
+
+        if ($ingredients === []) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Semua bahan terpilih sudah lewat kedaluwarsa lebih dari 1 hari dan otomatis diarsipkan. Pilih bahan lain atau perbarui tanggalnya di Inventaris Dapur.'
+            ], 422);
+        }
+
         $preferences = [
             'cuisine_type' => $request->cuisine_type ?? 'Nusantara / Masakan Rumahan Indonesia',
             'meal_type' => $request->meal_type ?? 'Makan Siang',
@@ -68,6 +87,34 @@ class RecipeController extends Controller
         $result = $this->recipeService->generateOrGetCached($ingredients, $preferences, $user->id);
 
         return response()->json($result);
+    }
+
+    /**
+     * Buang bahan yang sudah tidak dimiliki kulkas aktif (terarsip karena kedaluwarsa).
+     * Nama yang masih ada pada bahan aktif tetap lolos agar stok ganda tidak ikut terblokir.
+     */
+    private function saringBahanArsip(int $userId, array $ingredients): array
+    {
+        $namaAktif = KitchenInventory::where('user_id', $userId)->active()
+            ->pluck('item_name')
+            ->map(fn($n) => strtolower(trim($n)))
+            ->unique();
+
+        $namaArsip = KitchenInventory::where('user_id', $userId)->archived()
+            ->pluck('item_name')
+            ->map(fn($n) => strtolower(trim($n)))
+            ->unique()
+            ->diff($namaAktif);
+
+        $tersaring = array_filter($ingredients, function ($bahan) use ($namaArsip) {
+            $nama = strtolower(trim(is_array($bahan)
+                ? (string) ($bahan['name'] ?? $bahan['item_name'] ?? '')
+                : (string) $bahan));
+
+            return !$namaArsip->contains($nama);
+        });
+
+        return array_values($tersaring);
     }
 
     /**
@@ -119,8 +166,9 @@ class RecipeController extends Controller
             ->orWhere('slug', $id)
             ->firstOrFail();
 
-        // Ambil stok bahan di kulkas user untuk pencocokan visual checklist
+        // Ambil stok bahan aktif di kulkas user untuk pencocokan visual checklist
         $userPantryNames = KitchenInventory::where('user_id', $user->id)
+            ->active()
             ->pluck('item_name')
             ->map(fn($n) => strtolower(trim($n)))
             ->toArray();
@@ -154,16 +202,18 @@ class RecipeController extends Controller
     public function rescueExpiring(Request $request)
     {
         $user = Auth::user();
+        $this->inventoryService->arsipkanBahanKadaluarsa($user->id);
 
-        // Ambil bahan-bahan yang mendekati kedaluwarsa (<= 3 hari)
+        // Bahan yang masih layak pakai dan mendekati kedaluwarsa (<= 3 hari)
         $expiringItems = KitchenInventory::where('user_id', $user->id)
+            ->active()
             ->whereDate('expiration_date', '>=', Carbon::today())
             ->whereDate('expiration_date', '<=', Carbon::today()->addDays(3))
             ->get();
 
         if ($expiringItems->isEmpty()) {
-            // Ambil 3 bahan pertama jika tidak ada yang darurat
-            $expiringItems = KitchenInventory::where('user_id', $user->id)->take(3)->get();
+            // Ambil 3 bahan aktif pertama jika tidak ada yang darurat
+            $expiringItems = KitchenInventory::where('user_id', $user->id)->active()->take(3)->get();
         }
 
         if ($expiringItems->isEmpty()) {

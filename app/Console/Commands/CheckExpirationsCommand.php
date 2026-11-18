@@ -6,6 +6,7 @@ use App\Models\KitchenInventory;
 use App\Models\RecipeCache;
 use App\Models\User;
 use App\Services\GeminiService;
+use App\Services\InventoryService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
@@ -29,12 +30,19 @@ class CheckExpirationsCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(GeminiService $geminiService): int
+    public function handle(GeminiService $geminiService, InventoryService $inventoryService): int
     {
         $this->info("=== [RESEPIFY SMART EXPIRATION SCHEDULER (UNIVERSITAS BSI)] ===");
         $this->info("Menjalankan pemindaian bahan makanan kulkas mendekati kedaluwarsa...");
 
         $userId = $this->option('user');
+
+        $jumlahArsip = $inventoryService->arsipkanBahanKadaluarsa($userId ? (int) $userId : null);
+        if ($jumlahArsip > 0) {
+            $batas = InventoryService::tanggalBatasArsip()->format('d M Y');
+            $this->line("{$jumlahArsip} bahan yang kedaluwarsa sebelum {$batas} dipindahkan ke arsip agar tidak terpakai di generator resep.");
+        }
+
         $query = KitchenInventory::whereDate('expiration_date', '>=', Carbon::today())
             ->whereDate('expiration_date', '<=', Carbon::today()->addDays(3));
 

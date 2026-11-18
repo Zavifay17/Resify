@@ -84,7 +84,12 @@
         <div class="stat accent-info">
             <div class="label"><i data-lucide="calendar-x-2"></i> Kadaluwarsa</div>
             <div class="value">{{ $stats['expired_count'] }}<span class="unit">item</span></div>
-            <div class="foot">Sudah lewat tanggal batas</div>
+            <div class="foot">
+                Sudah lewat tanggal batas
+                @if(($stats['archived_count'] ?? 0) > 0)
+                    &middot; <a href="{{ route('inventory.index', ['status' => 'archived']) }}">{{ $stats['archived_count'] }} diarsipkan</a>
+                @endif
+            </div>
         </div>
     </div>
 
@@ -108,6 +113,8 @@
                         <option value="expiring_soon" {{ request('status') === 'expiring_soon' ? 'selected' : '' }}>Segera Dimasak (&le; 3 hari)</option>
                         <option value="safe" {{ request('status') === 'safe' ? 'selected' : '' }}>Kondisi Aman</option>
                         <option value="expired" {{ request('status') === 'expired' ? 'selected' : '' }}>Kadaluwarsa</option>
+                        <option value="archived" {{ request('status') === 'archived' ? 'selected' : '' }}>Arsip Kedaluwarsa</option>
+                        <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Masih Bisa Dipakai</option>
                     </select>
                 </div>
 
@@ -183,7 +190,7 @@
                                     $dotClass = ['danger' => 'dot-danger', 'warning' => 'dot-warn', 'success' => 'dot-ok'][$badge['severity']] ?? 'dot';
                                     $isiBarang = max(6, round(($item->quantity / $maxQty) * 100));
                                 @endphp
-                                <tr>
+                                <tr class="{{ $item->is_archived ? 'is-archived' : '' }}">
                                     <td>
                                         <div class="flex-center gap-8">
                                             <span class="text-muted">{{ $item->ingredient?->icon ?? '🥗' }}</span>
@@ -203,7 +210,7 @@
                                     <td class="text-sm text-muted">{{ $item->storage_location }}</td>
                                     <td class="text-xs mono">{{ $item->purchase_date?->format('d M Y') }}</td>
                                     <td class="text-xs">
-                                        <span class="mono" style="{{ $item->days_until_expiration <= 3 ? 'color:var(--warn);font-weight:650' : '' }}">
+                                        <span class="mono" style="{{ $item->days_until_expiration <= 3 ? 'color:var(--warn);font-weight:650' : '' }}{{ $item->is_archived ? ';text-decoration:line-through' : '' }}">
                                             {{ $item->expiration_date?->format('d M Y') }}
                                         </span>
                                     </td>
@@ -211,6 +218,14 @@
                                         <span class="chip {{ $chipClass }}" style="max-width:190px;white-space:normal">
                                             <span class="dot {{ $dotClass }}"></span>{{ $badge['label'] }}
                                         </span>
+                                        @if($item->is_archived)
+                                            <div class="mt-8">
+                                                <span class="chip chip-navy text-xs" style="max-width:190px;white-space:normal">
+                                                    <i data-lucide="archive"></i>
+                                                    Diarsipkan, tidak dipakai resep
+                                                </span>
+                                            </div>
+                                        @endif
                                     </td>
                                     <td>
                                         <span class="text-xs mono" title="{{ $item->supabase_id ? 'Tersinkronisasi ke Supabase Cloud' : 'Tersimpan di MySQL Lokal' }}">
@@ -219,9 +234,15 @@
                                         </span>
                                     </td>
                                     <td class="actions">
-                                        <a href="{{ route('recipes.generator', ['items' => $item->item_name]) }}" title="Ciptakan Resep dari Bahan Ini" class="btn btn-ghost btn-sm">
-                                            <i data-lucide="sparkles"></i>
-                                        </a>
+                                        @if($item->is_archived)
+                                            <button type="button" title="Bahan sudah diarsipkan, tidak bisa dipakai generator resep" class="btn btn-ghost btn-sm" disabled>
+                                                <i data-lucide="sparkles"></i>
+                                            </button>
+                                        @else
+                                            <a href="{{ route('recipes.generator', ['items' => $item->item_name]) }}" title="Ciptakan Resep dari Bahan Ini" class="btn btn-ghost btn-sm">
+                                                <i data-lucide="sparkles"></i>
+                                            </a>
+                                        @endif
                                         <button type="button" title="Ubah Bahan" @click="openEdit({{ json_encode($item) }})" class="btn btn-secondary btn-sm">
                                             <i data-lucide="edit-3"></i>
                                         </button>

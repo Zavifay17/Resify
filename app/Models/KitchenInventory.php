@@ -22,6 +22,7 @@ class KitchenInventory extends Model
         'purchase_date',
         'expiration_date',
         'status',
+        'archived_at',
         'notes',
         'photo_path',
         'supabase_id',
@@ -34,6 +35,7 @@ class KitchenInventory extends Model
             'purchase_date' => 'date',
             'expiration_date' => 'date',
             'quantity' => 'decimal:2',
+            'archived_at' => 'datetime',
             'supabase_synced_at' => 'datetime',
         ];
     }
@@ -59,6 +61,14 @@ class KitchenInventory extends Model
 
         $now = Carbon::today();
         return (int) $now->diffInDays($this->expiration_date, false);
+    }
+
+    /**
+     * Bahan yang sudah diarsipkan tidak masuk lagi ke pilihan generator resep
+     */
+    public function getIsArchivedAttribute(): bool
+    {
+        return !empty($this->archived_at);
     }
 
     /**
@@ -143,6 +153,22 @@ class KitchenInventory extends Model
     public function scopeExpired($query)
     {
         return $query->whereDate('expiration_date', '<', Carbon::today());
+    }
+
+    /**
+     * Bahan yang masih boleh dipakai untuk generator resep AI
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('archived_at');
+    }
+
+    /**
+     * Arsip bahan yang sudah lewat kedaluwarsa (tetap bisa dibaca, tidak dipakai lagi)
+     */
+    public function scopeArchived($query)
+    {
+        return $query->whereNotNull('archived_at');
     }
 }
 

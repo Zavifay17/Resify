@@ -88,21 +88,32 @@ class SupabaseService
             }
 
             if ($tabel->successful()) {
+                // Bucket hanya bisa dilihat memakai kunci service role; anon key
+                // selalu dibalas "Bucket not found" walau bucket-nya tersedia.
+                $probeKey = $this->keyUntukTulis();
                 $bucket = Http::timeout(10)
                     ->withHeaders([
-                        'apikey' => $key,
-                        'Authorization' => 'Bearer ' . $key,
+                        'apikey' => $probeKey,
+                        'Authorization' => 'Bearer ' . $probeKey,
                     ])
                     ->get("{$url}/storage/v1/bucket/{$this->bucket}");
 
+                if ($bucket->successful()) {
+                    $pesan = 'Supabase Cloud terhubung: tabel inventaris dan bucket foto siap dipakai.';
+                } elseif ($probeKey === $this->key) {
+                    $pesan = 'Tabel inventaris siap. Bucket foto belum dapat dipastikan karena Service Key belum diisi; '
+                        . 'lengkapi SUPABASE_SERVICE_KEY di pengaturan bila unggah foto gagal.';
+                } else {
+                    $pesan = 'Tabel inventaris siap, tapi bucket ' . $this->bucket . ' belum ada. Jalankan supabase/sql/setup.sql.';
+                }
+
                 return [
                     'success' => true,
-                    'message' => $bucket->successful()
-                        ? 'Supabase Cloud terhubung: tabel inventaris dan bucket foto siap dipakai.'
-                        : 'Tabel inventaris siap, tapi bucket ' . $this->bucket . ' belum ada. Jalankan supabase/sql/setup.sql.',
+                    'message' => $pesan,
                     'url' => $url,
                     'latency_ms' => $latency,
                     'status_code' => $tabel->status(),
+                    'bucket_siap' => $bucket->successful(),
                     'jumlah_baris_terlihat' => count($tabel->json() ?? [])
                 ];
             }

@@ -220,8 +220,9 @@
                 <p><strong>Program Studi:</strong> Rekayasa Perangkat Lunak (RPL)</p>
             </div>
             <div>
-                <p><strong>Total Stok Terdaftar:</strong> {{ $stats['total_items'] }} Komoditas</p>
+                <p><strong>Total Stok Aktif Terdaftar:</strong> {{ $items->count() }} Komoditas</p>
                 <p><strong>Bahan Segera Dimasak (&le; 3 hari):</strong> {{ $stats['expiring_count'] }} Item</p>
+                <p><strong>Bahan Diarsipkan (lewat &gt; 1 hari):</strong> {{ $stats['archived_count'] ?? 0 }} Item</p>
                 <p><strong>Sinkronisasi Cloud Supabase:</strong> {{ $stats['supabase_synced_count'] }} Item</p>
             </div>
         </section>

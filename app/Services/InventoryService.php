@@ -13,11 +13,42 @@ use Illuminate\Support\Collection;
  */
 class InventoryService
 {
+    /**
+     * Toleransi hari setelah tanggal kedaluwarsa. Lewat batas ini bahan
+     * diarsipkan: tetap terlihat di daftar tapi tidak bisa dipakai resep lagi.
+     */
+    public const TOLERANSI_HARI_KADALUARSA = 1;
+
     protected SupabaseService $supabaseService;
 
     public function __construct(SupabaseService $supabaseService)
     {
         $this->supabaseService = $supabaseService;
+    }
+
+    /**
+     * Batas tanggal: bahan dengan expiration_date sebelum tanggal ini dianggap basi
+     */
+    public static function tanggalBatasArsip(): Carbon
+    {
+        return Carbon::today()->subDays(self::TOLERANSI_HARI_KADALUARSA);
+    }
+
+    /**
+     * Arsipkan otomatis semua bahan yang sudah lewat kedaluwarsa lebih dari toleransi.
+     * Tidak menghapus baris, hanya menandai archived_at supaya riwayat tetap terbaca.
+     */
+    public function arsipkanBahanKadaluarsa(?int $userId = null): int
+    {
+        $query = KitchenInventory::whereNull('archived_at')
+            ->whereNotNull('expiration_date')
+            ->whereDate('expiration_date', '<', static::tanggalBatasArsip());
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+
+        return $query->update(['archived_at' => now()]);
     }
 
     /**
@@ -53,6 +84,7 @@ class InventoryService
             'safe_count' => $safeCount,
             'expiring_count' => $expiringCount,
             'expired_count' => $expiredCount,
+            'archived_count' => $items->whereNotNull('archived_at')->count(),
             'categories' => $categories,
             'locations' => $locations,
             'supabase_synced_count' => $items->whereNotNull('supabase_id')->count()
@@ -65,6 +97,7 @@ class InventoryService
     public function getExpiringSoonItems(int $userId): Collection
     {
         return KitchenInventory::where('user_id', $userId)
+            ->active()
             ->whereDate('expiration_date', '>=', Carbon::today())
             ->whereDate('expiration_date', '<=', Carbon::today()->addDays(3))
             ->orderBy('expiration_date', 'asc')

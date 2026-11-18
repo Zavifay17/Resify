@@ -36,6 +36,8 @@ class DashboardController extends Controller
             return redirect()->route('login');
         }
 
+        $this->inventoryService->arsipkanBahanKadaluarsa($user->id);
+
         $stats = $this->inventoryService->getDashboardStats($user->id);
         $expiringItems = $this->inventoryService->getExpiringSoonItems($user->id);
 
