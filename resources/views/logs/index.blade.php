@@ -14,19 +14,21 @@
 
     {{-- Header halaman --}}
     <div class="page-head">
-        <div class="flex-between" style="align-items:flex-start">
-            <div>
-                <div class="flex-center flex-wrap gap-8">
-                    <span class="eyebrow" style="margin-bottom:0"><i data-lucide="shield-check"></i> Standar Penilaian RPL</span>
-                    <span class="text-xs text-muted">Monitoring Biaya, Token & Latensi API AI</span>
+        <div class="page-head-row">
+            <div class="page-head-main">
+                <div class="page-head-meta">
+                    <span class="eyebrow"><i data-lucide="shield-check"></i> Standar Penilaian RPL</span>
+                    <span class="chip chip-brand">Monitoring Biaya, Token &amp; Latensi API AI</span>
                 </div>
-                <h1>Log & Performa Kecerdasan Buatan</h1>
-                <p class="sub mb-0">Transparansi pemanggilan Gemini API, penghitungan token input/output, dan efisiensi sistem caching.</p>
+                <h1>Log &amp; Performa Kecerdasan Buatan</h1>
+                <p class="sub">Transparansi pemanggilan Gemini API, penghitungan token input/output, dan efisiensi sistem caching.</p>
             </div>
 
-            <a href="{{ route('settings.index') }}" class="btn btn-secondary">
-                <i data-lucide="sliders"></i> Konfigurasi Model Gemini
-            </a>
+            <div class="page-head-actions">
+                <a href="{{ route('settings.index') }}" class="btn btn-secondary">
+                    <i data-lucide="sliders"></i> Konfigurasi Model Gemini
+                </a>
+            </div>
         </div>
     </div>
 

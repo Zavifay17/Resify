@@ -4,12 +4,24 @@
 
 @section('content')
 <div class="page-head">
-    <div class="eyebrow"><i data-lucide="sliders-horizontal"></i> Konfigurasi Sistem</div>
-    <h1>Pengaturan Sistem</h1>
-    <p class="sub">
-        Atur profil dan preferensi memasak, lalu lengkapi kunci API Gemini serta koneksi Supabase Cloud.
-        Preferensi profil dipakai generator resep, sedangkan kunci API disimpan ke database.
-    </p>
+    <div class="page-head-row">
+        <div class="page-head-main">
+            <div class="page-head-meta">
+                <span class="eyebrow"><i data-lucide="sliders-horizontal"></i> Konfigurasi Sistem</span>
+                <span class="chip chip-brand">Gemini API &amp; Supabase Cloud</span>
+            </div>
+            <h1>Pengaturan Sistem</h1>
+            <p class="sub">
+                Atur profil dan preferensi memasak, lalu lengkapi kunci API Gemini serta koneksi Supabase Cloud.
+                Preferensi profil dipakai generator resep, sedangkan kunci API disimpan ke database.
+            </p>
+        </div>
+        <div class="page-head-actions">
+            <a href="{{ route('dashboard') }}" class="btn btn-secondary">
+                <i data-lucide="arrow-left"></i> Kembali ke Dashboard
+            </a>
+        </div>
+    </div>
 </div>
 
 <div class="grid grid-side" x-data="{
@@ -17,6 +29,23 @@
     geminiResult: null,
     testingSupabase: false,
     supabaseResult: null,
+    sqlCopied: false,
+    projectRef: '{{ $supabaseRef }}',
+    setupSql: @js($setupSql),
+
+    copySetupSql() {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(this.setupSql);
+            this.sqlCopied = true;
+            setTimeout(() => this.sqlCopied = false, 3500);
+        }
+    },
+
+    getProjectRef() {
+        const url = document.getElementById('setting_supabase_url')?.value || '';
+        const m = url.match(/https:\/\/([a-z0-9_-]+)\.supabase\.co/i);
+        return m ? m[1] : (this.projectRef || 'lyugejvitpgpmtsdtzsi');
+    },
 
     testGemini() {
         const key = document.getElementById('setting_gemini_key').value;
@@ -259,17 +288,23 @@
                     <div class="field">
                         <label class="label" for="setting_gemini_model">Model Gemini</label>
                         <select class="select" id="setting_gemini_model" name="gemini_model">
+                            <option value="gemini-3-flash-preview" {{ $geminiModel === 'gemini-3-flash-preview' || !$geminiModel ? 'selected' : '' }}>
+                                Gemini 3 Flash (sangat cepat, stabil &amp; direkomendasikan)
+                            </option>
+                            <option value="gemini-3.1-flash-lite" {{ $geminiModel === 'gemini-3.1-flash-lite' ? 'selected' : '' }}>
+                                Gemini 3.1 Flash Lite (paling hemat kuota)
+                            </option>
+                            <option value="gemini-3.8-flash" {{ $geminiModel === 'gemini-3.8-flash' ? 'selected' : '' }}>
+                                Gemini 3.8 Flash (fitur penalaran terbaru)
+                            </option>
+                            <option value="gemini-3.1-pro-preview" {{ $geminiModel === 'gemini-3.1-pro-preview' ? 'selected' : '' }}>
+                                Gemini 3.1 Pro (penalaran kompleks &amp; resep mendalam)
+                            </option>
                             <option value="gemini-3.5-flash" {{ $geminiModel === 'gemini-3.5-flash' ? 'selected' : '' }}>
-                                Gemini 3.5 Flash (cepat, direkomendasikan)
-                            </option>
-                            <option value="gemini-pro-latest" {{ $geminiModel === 'gemini-pro-latest' ? 'selected' : '' }}>
-                                Gemini Pro terbaru (penalaran kompleks)
-                            </option>
-                            <option value="gemini-flash-lite-latest" {{ $geminiModel === 'gemini-flash-lite-latest' ? 'selected' : '' }}>
-                                Gemini Flash Lite terbaru (paling hemat kuota)
+                                Gemini 3.5 Flash (server sering padat)
                             </option>
                         </select>
-                        <div class="hint">Model ringan mempercepat respons dan menekan pemakaian token.</div>
+                        <div class="hint">Model ringan mempercepat respons resep dan menekan latensi API.</div>
                         @error('gemini_model')
                             <div class="err">{{ $message }}</div>
                         @enderror
@@ -391,6 +426,33 @@
                                 <span class="text-sm mono" x-show="supabaseResult.url" x-text="supabaseResult.url"></span>
                             </div>
                         </div>
+
+                        {{-- Panduan Solusi Cepat bila Tabel Belum Ada (HTTP 404) --}}
+                        <template x-if="!supabaseResult.success && supabaseResult.status_code === 404">
+                            <div class="card mt-12" style="background:var(--bg); border: 1px solid var(--line-strong);">
+                                <div class="card-body tight stack-12">
+                                    <div class="strong text-sm flex-center gap-6" style="color:var(--brand-dark)">
+                                        <i data-lucide="wrench" style="width:16px;height:16px"></i>
+                                        <span>Cara Pasang Tabel ke Supabase (Hanya 1 Menit):</span>
+                                    </div>
+                                    <ol class="text-sm text-muted stack-6" style="padding-left:18px;margin:0">
+                                        <li>Tekan tombol <strong>Salin Script SQL Setup</strong> di bawah.</li>
+                                        <li>Tekan tombol <strong>Buka SQL Editor Supabase</strong> (membuka tab baru).</li>
+                                        <li>Paste (<span class="mono">Ctrl + V</span>) di halaman query Supabase, lalu klik tombol hijau <strong>RUN</strong>.</li>
+                                        <li>Kembali ke tab ini dan klik <strong>Uji koneksi Supabase</strong> lagi. Selesai!</li>
+                                    </ol>
+                                    <div class="flex-center flex-wrap gap-8 pt-4">
+                                        <button type="button" class="btn btn-primary btn-sm" @click="copySetupSql()">
+                                            <i data-lucide="copy"></i> <span x-text="sqlCopied ? 'Script Berhasil Disalin!' : 'Salin Script SQL Setup'"></span>
+                                        </button>
+                                        <a :href="'https://supabase.com/dashboard/project/' + getProjectRef() + '/sql/new'" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+                                            <i data-lucide="external-link"></i> Buka SQL Editor Supabase
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
                         <div class="flex-center flex-wrap gap-8 mt-8">
                             <span class="chip" x-show="supabaseResult.status_code">
                                 Status HTTP: <span class="strong" x-text="supabaseResult.status_code"></span>

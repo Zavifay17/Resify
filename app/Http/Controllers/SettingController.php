@@ -24,11 +24,17 @@ class SettingController extends Controller
         $user = Auth::user();
 
         $geminiApiKey = SystemSetting::get('gemini_api_key', env('GEMINI_API_KEY', ''));
-        $geminiModel = SystemSetting::get('gemini_model', env('GEMINI_MODEL', 'gemini-3.5-flash'));
+        $geminiModel = SystemSetting::get('gemini_model', env('GEMINI_MODEL', 'gemini-3-flash-preview'));
 
         $supabaseUrl = SystemSetting::get('supabase_url', env('SUPABASE_URL', ''));
         $supabaseKey = SystemSetting::get('supabase_key', env('SUPABASE_KEY', ''));
         $supabaseBucket = SystemSetting::get('supabase_bucket', env('SUPABASE_BUCKET', 'ingredients'));
+
+        $setupSql = file_exists(base_path('supabase/sql/setup.sql')) ? file_get_contents(base_path('supabase/sql/setup.sql')) : '';
+        $supabaseRef = '';
+        if (preg_match('#https://([a-z0-9_-]+)\.supabase\.co#i', $supabaseUrl, $matches)) {
+            $supabaseRef = $matches[1];
+        }
 
         $campusName = SystemSetting::get('campus_name', 'Universitas Bina Sarana Informatika');
         $studentNim = $user->nim ?? SystemSetting::get('student_nim', '12210889');
@@ -41,6 +47,8 @@ class SettingController extends Controller
             'supabaseUrl',
             'supabaseKey',
             'supabaseBucket',
+            'setupSql',
+            'supabaseRef',
             'campusName',
             'studentNim',
             'studentName'

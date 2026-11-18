@@ -143,20 +143,24 @@
 }">
 
     <!-- Page Header -->
-    <div class="page-head flex-between" style="flex-wrap: wrap; gap: 16px; align-items: flex-start;">
-        <div class="stack-4">
-            <div class="flex-center gap-8">
-                <span class="eyebrow">Peracik Resep Otomatis</span>
-                <span class="text-xs text-muted">Gemini Flash + engine cadangan lokal</span>
+    <div class="page-head">
+        <div class="page-head-row">
+            <div class="page-head-main">
+                <div class="page-head-meta">
+                    <span class="eyebrow"><i data-lucide="sparkles"></i> Peracik Resep Otomatis</span>
+                    <span class="chip chip-brand">Gemini Flash + Engine Cadangan Lokal</span>
+                </div>
+                <h1>Generator Resep Berbasis Bahan Sisa</h1>
+                <p class="sub">Pilih bahan yang tersedia di kulkas Anda, lalu biarkan AI meracik hidangan lezat dan mengestimasi nilai gizinya secara otomatis.</p>
             </div>
-            <h1>Generator Resep Berbasis Bahan Sisa</h1>
-            <p class="sub mb-0">Pilih bahan yang tersedia di kulkas Anda, lalu biarkan AI meracik hidangan lezat dan mengestimasi nilai gizinya secara otomatis.</p>
-        </div>
 
-        <a href="{{ route('recipes.index') }}" class="btn btn-secondary btn-sm">
-            <i data-lucide="book-open"></i>
-            Katalog Kuliner Nusantara
-        </a>
+            <div class="page-head-actions">
+                <a href="{{ route('recipes.index') }}" class="btn btn-secondary">
+                    <i data-lucide="book-open"></i>
+                    Katalog Kuliner Nusantara
+                </a>
+            </div>
+        </div>
     </div>
 
     <!-- Panel kiri: bahan + preferensi -->

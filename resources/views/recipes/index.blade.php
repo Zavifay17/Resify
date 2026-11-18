@@ -19,20 +19,23 @@
 
     <!-- Judul katalog -->
     <div class="page-head">
-        <div class="flex-between flex-wrap gap-16">
-            <div>
-                <div class="flex-center flex-wrap gap-8 mb-8">
+        <div class="page-head-row">
+            <div class="page-head-main">
+                <div class="page-head-meta">
+                    <span class="eyebrow"><i data-lucide="book-open"></i> Katalog Resep Nusantara</span>
                     <span class="chip chip-brand">Koleksi Resep Cerdas</span>
-                    <span class="text-xs text-muted">Total: {{ $recipes->total() }} Resep Tersimpan</span>
+                    <span class="chip">Total: {{ $recipes->total() }} Resep Tersimpan</span>
                 </div>
-                <h1>Katalog Kuliner Indonesia & Kreasi AI</h1>
-                <p class="sub mb-0">Jelajahi kelezatan masakan tradisional, modern kafe, hingga jajanan kaki lima yang telah disesuaikan dengan bahan dapur.</p>
+                <h1>Katalog Kuliner Indonesia &amp; Kreasi AI</h1>
+                <p class="sub">Jelajahi kelezatan masakan tradisional, modern kafe, hingga jajanan kaki lima yang telah disesuaikan dengan bahan dapur.</p>
             </div>
 
-            <a href="{{ route('recipes.generator') }}" class="btn btn-primary">
-                <i data-lucide="sparkles"></i>
-                Rancang Resep Baru
-            </a>
+            <div class="page-head-actions">
+                <a href="{{ route('recipes.generator') }}" class="btn btn-primary">
+                    <i data-lucide="sparkles"></i>
+                    Rancang Resep Baru
+                </a>
+            </div>
         </div>
 
         <!-- Form pencarian -->

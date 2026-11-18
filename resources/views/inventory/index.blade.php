@@ -30,17 +30,18 @@
 
     <!-- Header halaman & tombol aksi -->
     <div class="page-head">
-        <div class="flex-between">
-            <div>
-                <div class="flex-center flex-wrap gap-8 mb-8">
+        <div class="page-head-row">
+            <div class="page-head-main">
+                <div class="page-head-meta">
+                    <span class="eyebrow"><i data-lucide="refrigerator"></i> Manajemen Stok Dapur</span>
                     <span class="chip chip-brand">Stok Kulkas &amp; Dapur Mahasiswa</span>
-                    <span class="text-xs text-muted">Total: {{ $items->total() }} Bahan</span>
+                    <span class="chip">Total: {{ $items->total() }} Bahan</span>
                 </div>
                 <h1>Manajemen Inventaris Dapur</h1>
-                <p class="sub mb-0">Pantau masa simpan bahan makanan, kurangi limbah pangan, dan kelola stok dapur secara real-time.</p>
+                <p class="sub">Pantau masa simpan bahan makanan, kurangi limbah pangan, dan kelola stok dapur secara real-time.</p>
             </div>
 
-            <div class="flex-center flex-wrap gap-8">
+            <div class="page-head-actions">
                 <button type="button" @click="addModal = true" class="btn btn-primary">
                     <i data-lucide="plus-circle"></i> Tambah Bahan Manual
                 </button>

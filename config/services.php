@@ -37,9 +37,13 @@ return [
 
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
-        'model' => env('GEMINI_MODEL', 'gemini-3.5-flash'),
-        // Model cadangan dipakai kalau model utama sedang padat (HTTP 503/429).
-        'fallback_models' => ['gemini-3-flash-preview', 'gemini-3.1-flash-lite'],
+        'model' => env('GEMINI_MODEL', 'gemini-3-flash-preview'),
+        // Model cadangan dipakai otomatis kalau model utama sedang padat (HTTP 503/429/timeout).
+        'fallback_models' => [
+            'gemini-3-flash-preview',
+            'gemini-3.1-flash-lite',
+            'gemini-3.8-flash',
+        ],
     ],
 
     'supabase' => [

@@ -9,27 +9,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/resepify.css') }}?v=20261104">
+    <link rel="stylesheet" href="{{ asset('css/resepify.css') }}?v=20261118_v2">
 
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js" defer></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('styles')
 </head>
-<body x-data="{ navOpen: false, infoOpen: false }">
+<body x-data="{ navOpen: false }">
 
 <header class="site-header">
     <div class="wrap">
-        <a href="{{ auth()->check() ? route('dashboard') : route('login') }}" class="brand">
+        <a href="{{ auth()->check() ? route('dashboard') : route('login') }}" class="brand" title="Resepify - Beranda">
             <span class="brand-mark"><i data-lucide="chef-hat"></i></span>
-            <span>
-                <span class="brand-name">Resepify</span>
-                <span class="brand-tag">Inventaris dapur &amp; resep dari bahan yang ada</span>
-            </span>
+            <span class="brand-name">Resepify</span>
         </a>
 
         @auth
-        <nav class="nav">
+        <div class="header-divider" aria-hidden="true"></div>
+
+        <nav class="nav" aria-label="Navigasi Utama">
             <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'is-active' : '' }}">
                 <i data-lucide="home"></i><span>Dashboard</span>
             </a>
@@ -53,9 +52,6 @@
 
         <div class="header-right">
             @auth
-                <a href="{{ route('recipes.generator') }}" class="btn btn-primary btn-sm header-cta">
-                    <i data-lucide="utensils-crossed"></i><span class="cta-text">Buat Resep</span>
-                </a>
                 <a href="{{ route('settings.index') }}" class="icon-btn" title="Pengaturan API &amp; Sistem">
                     <i data-lucide="settings"></i>
                 </a>
@@ -63,8 +59,8 @@
                 <div class="dropdown" x-data="{ open: false }" @click.outside="open = false">
                     <button type="button" class="dropdown-toggle" @click="open = !open">
                         <span class="avatar">{{ strtoupper(substr(optional(auth()->user())->name ?? 'M', 0, 2)) }}</span>
-                        <span class="truncate nama-user" style="max-width:110px">{{ Str::limit(optional(auth()->user())->name ?? 'Mahasiswa', 16) }}</span>
-                        <i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--muted)"></i>
+                        <span class="truncate nama-user" style="max-width:115px">{{ Str::limit(optional(auth()->user())->name ?? 'Mahasiswa', 16) }}</span>
+                        <i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--muted);flex:none"></i>
                     </button>
 
                     <div class="dropdown-menu" x-show="open" x-cloak>
@@ -75,7 +71,6 @@
                         </div>
                         <a href="{{ route('settings.index') }}"><i data-lucide="sliders-horizontal"></i> Pengaturan Gemini &amp; Supabase</a>
                         <a href="{{ route('inventory.print') }}" target="_blank" rel="noopener"><i data-lucide="printer"></i> Cetak Laporan Inventaris</a>
-                        <button type="button" @click="infoOpen = true; open = false"><i data-lucide="graduation-cap"></i> Informasi Proyek TA</button>
                         <form action="{{ route('logout') }}" method="POST" style="margin:0">
                             @csrf
                             <button type="submit" class="is-danger"><i data-lucide="log-out"></i> Keluar</button>
@@ -172,66 +167,13 @@
 
         <div style="max-width:280px">
             <h5>Tentang Proyek</h5>
-            <p class="fine mb-8">
+            <p class="fine mb-0">
                 Dibuat untuk mengurangi makanan terbuang: sistem membaca stok kulkas,
                 lalu menyusun resep dari bahan yang hampir kedaluwarsa.
             </p>
-            <button type="button" class="btn btn-secondary btn-sm" @click="infoOpen = true">
-                <i data-lucide="graduation-cap"></i> Informasi Proyek
-            </button>
         </div>
     </div>
 </footer>
-
-{{-- Ringkasan proyek, dipakai saat demo ke dosen penguji --}}
-<div class="modal-mask" x-show="infoOpen" x-cloak @click.self="infoOpen = false">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Informasi proyek tugas akhir">
-        <div class="modal-head">
-            <h3>Ringkasan Proyek Tugas Akhir</h3>
-            <button type="button" class="icon-btn" @click="infoOpen = false" aria-label="Tutup">
-                <i data-lucide="x"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="stack-16">
-                <div>
-                    <div class="eyebrow"><i data-lucide="file-text"></i> Judul</div>
-                    <p class="mb-0">
-                        Resepify: Sistem Manajemen Inventaris Dapur Cerdas dan Generator Resep
-                        Berbasis Bahan Sisa Menggunakan Laravel, MySQL, dan Supabase
-                    </p>
-                </div>
-
-                <dl class="kv">
-                    <dt>Mahasiswa</dt><dd>{{ optional(auth()->user())->name ?? 'Ahmad Fadhilah' }}</dd>
-                    <dt>NIM</dt><dd class="mono">{{ optional(auth()->user())->nim ?? '12210889' }}</dd>
-                    <dt>Program studi</dt><dd>Rekayasa Perangkat Lunak (RPL)</dd>
-                    <dt>Kampus</dt><dd>Universitas Bina Sarana Informatika</dd>
-                    <dt>Teknologi</dt><dd>Laravel 12, PHP 8.2, MySQL, Supabase, {{ config('services.gemini.model') }}</dd>
-                </dl>
-
-                <div>
-                    <div class="eyebrow"><i data-lucide="list-checks"></i> Standar kode yang diterapkan</div>
-                    <ul class="ing-list">
-                        <li><span class="name">Service pattern: logika AI dipisah ke <span class="mono">app/Services/GeminiService.php</span> dan <span class="mono">SupabaseService.php</span> agar controller tetap ramping.</span></li>
-                        <li><span class="name">Strict JSON prompting supaya respons AI langsung terbaca menjadi kartu resep.</span></li>
-                        <li><span class="name">Caching dua tingkat: Laravel Cache untuk kombinasi populer, tabel <span class="mono">recipes_cache</span> untuk hasil AI, jadi kuota API hemat.</span></li>
-                        <li><span class="name">Laravel Scheduler <span class="mono">resepify:check-expirations</span> mendeteksi bahan yang mendekati kedaluwarsa lalu meminta resep penyelamat.</span></li>
-                        <li><span class="name">Pemakaian token AI dicatat pada tabel <span class="mono">ai_logs</span> untuk monitoring biaya.</span></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <div class="modal-foot">
-            @auth
-                <a href="{{ route('settings.index') }}" class="btn btn-secondary btn-sm">
-                    <i data-lucide="sliders-horizontal"></i> Buka Pengaturan API
-                </a>
-            @endauth
-            <button type="button" class="btn btn-primary btn-sm" @click="infoOpen = false">Tutup</button>
-        </div>
-    </div>
-</div>
 
 <style>[x-cloak] { display: none !important; }</style>
 

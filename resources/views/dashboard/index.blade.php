@@ -7,11 +7,10 @@
 
     {{-- Pembuka halaman: sapaan, status sistem, dan aksi cepat --}}
     <div class="page-head">
-        <div class="flex-between">
-            <div>
-                <div class="eyebrow"><i data-lucide="chef-hat"></i> Dashboard Inventaris Dapur</div>
-                <h1>Halo, {{ $studentName }}</h1>
-                <div class="flex-center flex-wrap gap-8 mb-8">
+        <div class="page-head-row">
+            <div class="page-head-main">
+                <div class="page-head-meta">
+                    <span class="eyebrow"><i data-lucide="chef-hat"></i> Dashboard Inventaris Dapur</span>
                     <span class="chip chip-brand">
                         <i data-lucide="circle-check-big"></i> Sistem inventaris aktif
                     </span>
@@ -19,12 +18,13 @@
                         <i data-lucide="graduation-cap"></i> {{ $campusName }}
                     </span>
                 </div>
+                <h1>Halo, {{ $studentName }}</h1>
                 <p class="sub">
                     Resepify memantau stok kulkas Anda dan menyusun resep Nusantara dari bahan
                     yang tersedia, supaya tidak ada makanan yang terbuang.
                 </p>
             </div>
-            <div class="flex-center gap-8">
+            <div class="page-head-actions">
                 <a href="{{ route('recipes.generator') }}" class="btn btn-primary">
                     <i data-lucide="sparkles"></i> Buka Generator Resep
                 </a>
@@ -108,13 +108,14 @@
         <div class="card">
             <div class="card-head">
                 <h3><i data-lucide="camera"></i> Deteksi Foto Bahan</h3>
+                <span class="chip">Vision AI</span>
             </div>
             <div class="card-body tight col">
                 <p class="mb-0 text-sm text-muted">
                     Foto isi kulkas atau meja dapur, lalu Gemini Vision mengenali sayur,
                     bumbu, dan protein untuk dimasukkan ke inventaris secara otomatis.
                 </p>
-                <a href="{{ route('vision.index') }}" class="btn btn-secondary btn-sm">
+                <a href="{{ route('vision.index') }}" class="btn btn-secondary btn-sm btn-block" style="margin-top:auto">
                     <i data-lucide="scan-line"></i> Mulai Pemindaian
                 </a>
             </div>
@@ -123,13 +124,14 @@
         <div class="card">
             <div class="card-head">
                 <h3><i data-lucide="utensils-crossed"></i> Generator Resep</h3>
+                <span class="chip">Zero-Waste</span>
             </div>
             <div class="card-body tight col">
                 <p class="mb-0 text-sm text-muted">
                     Pilih bahan yang tersisa di kulkas. Sistem menyusun langkah masak,
                     takaran bumbu, dan perkiraan nutrisi untuk setiap resep.
                 </p>
-                <a href="{{ route('recipes.generator') }}" class="btn btn-secondary btn-sm">
+                <a href="{{ route('recipes.generator') }}" class="btn btn-secondary btn-sm btn-block" style="margin-top:auto">
                     <i data-lucide="arrow-right"></i> Susun Resep
                 </a>
             </div>
@@ -149,7 +151,7 @@
                     Menyelaraskan data stok dapur dan menyimpan foto bahan ke cloud
                     Supabase (PostgREST + Storage).
                 </p>
-                <form action="{{ route('inventory.sync-supabase') }}" method="POST">
+                <form action="{{ route('inventory.sync-supabase') }}" method="POST" style="margin-top:auto">
                     @csrf
                     <button type="submit" class="btn btn-secondary btn-sm btn-block">
                         <i data-lucide="refresh-cw"></i> Sinkronkan Sekarang
@@ -175,18 +177,20 @@
             @foreach($recentRecipes as $recipe)
                 <div class="card">
                     <div class="card-head">
-                        <span class="chip chip-brand">{{ $recipe->cuisine_type }}</span>
+                        <span class="chip chip-brand truncate" style="max-width:72%" title="{{ $recipe->cuisine_type }}">{{ $recipe->cuisine_type }}</span>
                         <span class="hint">
-                            <i data-lucide="clock" style="width:13px;height:13px;vertical-align:-2px"></i>
-                            {{ $recipe->cooking_time_minutes }} menit
+                            <i data-lucide="clock" style="width:13px;height:13px"></i>
+                            <span>{{ $recipe->cooking_time_minutes }} menit</span>
                         </span>
                     </div>
-                    <div class="card-body tight stack-8">
-                        <h3 class="mb-0">{{ $recipe->title }}</h3>
-                        <p class="mb-0 text-sm text-muted">{{ $recipe->description }}</p>
+                    <div class="card-body tight col">
+                        <div class="stack-8">
+                            <h3 class="mb-0">{{ $recipe->title }}</h3>
+                            <p class="mb-0 text-sm text-muted">{{ $recipe->description }}</p>
+                        </div>
 
                         @if($recipe->nutrition_facts)
-                            <div class="flex flex-wrap gap-8">
+                            <div class="flex flex-wrap gap-8" style="margin-top:auto;padding-top:4px">
                                 <span class="chip">Kalori: {{ $recipe->nutrition_facts['calories_kcal'] ?? 300 }} kkal</span>
                                 <span class="chip">Protein: {{ $recipe->nutrition_facts['protein_g'] ?? 20 }} g</span>
                                 <span class="chip">Karbo: {{ $recipe->nutrition_facts['carbs_g'] ?? 30 }} g</span>
@@ -194,12 +198,12 @@
                         @endif
                     </div>
                     <div class="card-foot flex-between">
-                        <span class="text-xs text-muted">
-                            <i data-lucide="users" style="width:13px;height:13px;vertical-align:-2px"></i>
-                            {{ $recipe->servings }} porsi
+                        <span class="text-xs text-muted flex-center gap-4">
+                            <i data-lucide="users" style="width:13px;height:13px"></i>
+                            <span>{{ $recipe->servings }} porsi</span>
                         </span>
-                        <a href="{{ route('recipes.show', $recipe->id) }}" class="text-sm strong">
-                            Buka resep <i data-lucide="chevron-right" style="width:13px;height:13px;vertical-align:-2px"></i>
+                        <a href="{{ route('recipes.show', $recipe->id) }}" class="text-sm strong flex-center gap-4">
+                            <span>Buka resep</span> <i data-lucide="chevron-right" style="width:14px;height:14px"></i>
                         </a>
                     </div>
                 </div>

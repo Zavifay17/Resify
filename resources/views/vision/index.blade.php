@@ -96,19 +96,21 @@
 
     {{-- Header halaman --}}
     <div class="page-head">
-        <div class="flex-between" style="align-items:flex-start">
-            <div>
-                <div class="flex-center flex-wrap gap-8">
-                    <span class="eyebrow" style="margin-bottom:0"><i data-lucide="scan-line"></i> Computer Vision AI</span>
-                    <span class="text-xs text-muted">Gemini Flash Vision</span>
+        <div class="page-head-row">
+            <div class="page-head-main">
+                <div class="page-head-meta">
+                    <span class="eyebrow"><i data-lucide="scan-line"></i> Computer Vision AI</span>
+                    <span class="chip chip-brand">Gemini Flash Vision</span>
                 </div>
                 <h1>Input Bahan Otomatis Lewat Foto</h1>
-                <p class="sub mb-0">Unggah foto isi kulkas atau meja dapur Anda. AI mengenali bahan makanan, kategori gizi, dan masa simpannya secara instan.</p>
+                <p class="sub">Unggah foto isi kulkas atau meja dapur Anda. AI mengenali bahan makanan, kategori gizi, dan masa simpannya secara instan.</p>
             </div>
 
-            <a href="{{ route('inventory.index') }}" class="btn btn-secondary">
-                <i data-lucide="arrow-left"></i> Kembali ke Inventaris
-            </a>
+            <div class="page-head-actions">
+                <a href="{{ route('inventory.index') }}" class="btn btn-secondary">
+                    <i data-lucide="arrow-left"></i> Kembali ke Inventaris
+                </a>
+            </div>
         </div>
     </div>
 

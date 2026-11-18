@@ -21,7 +21,7 @@ class GeminiService
     public function __construct()
     {
         $this->apiKey = SystemSetting::get('gemini_api_key', config('services.gemini.api_key', env('GEMINI_API_KEY', '')));
-        $this->model = SystemSetting::get('gemini_model', config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.5-flash')));
+        $this->model = SystemSetting::get('gemini_model', config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3-flash-preview')));
     }
 
     public function getApiKey(): string
@@ -65,13 +65,14 @@ class GeminiService
             ]
         ];
 
-        // Kalau model dipilih manual di form, hanya model itu yang dites.
-        $rantai = $model ? [$model] : $this->rantaiModel();
+        // Model yang dipilih dicoba pertama. Jika model itu lambat/503/timeout, sistem otomatis mencoba model cadangan yang aktif
+        $modelUtama = $model ?: $this->model;
+        $rantai = array_values(array_unique(array_filter(array_merge([$modelUtama], $this->rantaiModel()))));
         $hasil = $this->kirimKeGemini($payload, 15, $rantai, $key);
         $executionTime = (int) round((microtime(true) - $startTime) * 1000);
 
         if (isset($hasil['text'])) {
-            $usage = $hasil['usage'];
+            $usage = $hasil['usage'] ?? [];
 
             $this->logApiCall(
                 auth()->id(),
@@ -87,9 +88,17 @@ class GeminiService
                 $hasil['text']
             );
 
+            // Perbarui setting model bila berhasil terhubung
+            SystemSetting::set('gemini_model', $hasil['model'], 'Model Gemini Aktif Terverifikasi');
+
+            $pesan = 'Koneksi API Gemini Berhasil Terhubung!';
+            if ($model && $hasil['model'] !== $model) {
+                $pesan .= " (Model {$model} sedang mengalami lonjakan di Google, dialihkan otomatis ke {$hasil['model']})";
+            }
+
             return [
                 'success' => true,
-                'message' => 'Koneksi API Gemini Berhasil Terhubung!',
+                'message' => $pesan,
                 'reply' => trim($hasil['text']),
                 'model' => $hasil['model'],
                 'latency_ms' => $executionTime
@@ -498,7 +507,8 @@ PROMPT;
 
         foreach ($rantai as $model) {
             try {
-                $response = Http::timeout($timeout)
+                $response = Http::withoutVerifying()
+                    ->timeout($timeout)
                     ->post("{$this->baseUrl}/{$model}:generateContent?key={$key}", $payload);
 
                 if ($response->successful()) {
@@ -520,9 +530,9 @@ PROMPT;
                 $error = "HTTP {$response->status()}: " . ($response->json('error.message') ?? 'tanpa pesan error dari Google');
                 Log::warning("Gemini API call ({$model}) {$error}");
 
-                // 503/429 itu padat sesaat, model lain biasanya masih mau melayani.
+                // 503/429 itu padat sesaat, model lain di rantai cadangan akan melayani
                 if (in_array($response->status(), [429, 503], true)) {
-                    sleep(1);
+                    usleep(300000);
                 }
             } catch (\Throwable $e) {
                 $error = $e->getMessage();
@@ -538,7 +548,11 @@ PROMPT;
      */
     protected function rantaiModel(): array
     {
-        $cadangan = (array) config('services.gemini.fallback_models', []);
+        $cadangan = (array) config('services.gemini.fallback_models', [
+            'gemini-3-flash-preview',
+            'gemini-3.1-flash-lite',
+            'gemini-3.8-flash',
+        ]);
 
         return array_values(array_unique(array_filter(array_merge([$this->model], $cadangan))));
     }
