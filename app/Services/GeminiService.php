@@ -121,9 +121,12 @@ class GeminiService
     {
         $ingredientsList = implode(', ', array_map(function ($item) {
             if (is_array($item)) {
-                return ($item['name'] ?? $item['item_name']) . ' (' . ($item['quantity'] ?? '1') . ' ' . ($item['unit'] ?? '') . ')';
+                $name = $item['name'] ?? $item['item_name'] ?? '';
+                $qty = !empty($item['quantity']) ? ' ' . $item['quantity'] : '';
+                $unit = !empty($item['unit']) ? ' ' . $item['unit'] : '';
+                return trim("{$name}{$qty}{$unit}");
             }
-            return (string) $item;
+            return trim((string) $item);
         }, $availableIngredients));
 
         $cuisine = $preferences['cuisine_type'] ?? 'Nusantara / Masakan Rumahan Indonesia';
@@ -134,8 +137,8 @@ class GeminiService
 
         $prompt = <<<PROMPT
 Anda adalah Chef Eksekutif & Ahli Gizi kuliner profesional pada aplikasi "Resepify" (Tugas Akhir RPL Universitas BSI).
-Tugas Anda adalah merancang SATU resep masakan lezat, praktis, dan logis yang memaksimalkan bahan makanan yang tersedia berikut ini:
-Bahan Tersedia: [{$ingredientsList}]
+Tugas Anda adalah merancang SATU resep masakan lezat, praktis, dan logis yang BERPUSAT PADA BAHAN-BAHAN PILIHAN PENGGUNA BERIKUT:
+Bahan Terpilih dari Kulkas Pengguna: [{$ingredientsList}]
 
 Preferensi Pengguna:
 - Gaya Masakan: {$cuisine}
@@ -144,31 +147,33 @@ Preferensi Pengguna:
 - Preferensi Diet: {$diet}
 - Keahlian Memasak: {$skill}
 
-ATURAN KETAT:
-1. Utamakan bahan yang tersedia sebanyak mungkin agar tidak terbuang.
-2. Jika butuh bumbu dasar standar dapur (seperti garam, minyak, gula, air, merica), sebutkan di missing_ingredients dengan status "Bumbu Dapur Dasar".
-3. Tulis langkah memasak berurutan, jelas dengan estimasi menit per langkah.
-4. Hitung estimasi nutrisi per porsi secara akurat berdasarkan komposisi bahan.
-5. Berikan format keluaran HANYA berupa JSON murni tanpa pembuka/penutup markdown seperti ```json.
+ATURAN KETAT DAN MUTLAK:
+1. Resep masakan yang Anda buat WAJIB MEMASUKKAN DAN MENGOLAH BAHAN-BAHAN PILIHAN PENGGUNA DI ATAS [{$ingredientsList}] sebagai bahan utama masakan.
+2. Judul masakan ("title") HARUS secara spesifik dan menarik menyebutkan bahan utama dari pilihan pengguna tersebut (misal jika pengguna memilih Wortel dan Tahu, buat: "Tumis Tahu Sutra & Wortel Saus Tiram Gurih" atau "Sup Bening Wortel Tahu Sutra"). JANGAN membuat masakan dari bahan lain yang tidak dipilih pengguna!
+3. Masukkan semua bahan pilihan pengguna tersebut ke dalam array "used_ingredients" lengkap dengan perkiraan takaran dan satuannya.
+4. Di bagian "instructions", buat langkah-langkah memasak nyata yang berurutan, jelas mengolah dan memasak bahan-bahan pilihan pengguna tersebut.
+5. Anda boleh menambahkan bumbu dasar standar dapur (garam, gula, merica, minyak, bawang, air, kecap) di "missing_ingredients" dengan status "is_staple": true guna menyempurnakan cita rasa Nusantara.
+6. Hitung estimasi nutrisi per porsi secara akurat berdasarkan bahan yang digunakan.
+7. Berikan format keluaran HANYA berupa JSON murni tanpa pembuka/penutup markdown seperti ```json.
 
 FORMAT JSON SKEMA WAJIB:
 {
-  "title": "Nama Masakan yang Menarik dan Menggugah Selera",
-  "description": "Deskripsi singkat 2-3 kalimat tentang kelezatan dan aroma masakan ini.",
+  "title": "Nama Masakan Spesifik Menggunakan Bahan Pilihan Pengguna",
+  "description": "Deskripsi singkat 2-3 kalimat tentang kelezatan, aroma, dan perpaduan rasa dari bahan yang dipilih pengguna.",
   "cooking_time_minutes": {$maxTime},
   "difficulty": "Mudah",
   "servings": 2,
   "cuisine_type": "{$cuisine}",
   "meal_type": "{$mealType}",
   "used_ingredients": [
-    {"name": "Nama Bahan", "quantity": "Jumlah", "unit": "Satuan", "source": "pantry"}
+    {"name": "Nama Bahan Pilihan", "quantity": "Jumlah", "unit": "Satuan", "source": "pantry"}
   ],
   "missing_ingredients": [
     {"name": "Nama Bumbu Tambahan", "quantity": "Jumlah", "unit": "Satuan", "is_staple": true}
   ],
   "instructions": [
-    {"step_number": 1, "action": "Siapkan bumbu dan potong bahan sesuai selera.", "estimated_minutes": 5},
-    {"step_number": 2, "action": "Panaskan 2 sdm minyak di wajan...", "estimated_minutes": 10}
+    {"step_number": 1, "action": "Siapkan dan potong bahan pilihan sesuai kebutuhan...", "estimated_minutes": 5},
+    {"step_number": 2, "action": "Tumis/rebus bahan dengan bumbu harum...", "estimated_minutes": 10}
   ],
   "nutrition_facts": {
     "calories_kcal": 380,
@@ -177,7 +182,7 @@ FORMAT JSON SKEMA WAJIB:
     "fat_g": 14,
     "fiber_g": 5
   },
-  "chef_tips": "Tips rahasia chef untuk membuat masakan ini semakin harum dan sedap."
+  "chef_tips": "Tips rahasia chef untuk memaksimalkan rasa bahan masakan ini."
 }
 PROMPT;
 
@@ -192,24 +197,34 @@ PROMPT;
     public function analyzeFridgeVision(string $imagePathOrBase64, string $mimeType = 'image/jpeg'): array
     {
         $prompt = <<<PROMPT
-Anda adalah Model Computer Vision Kecerdasan Buatan spesialis identifikasi bahan makanan segar dan isi kulkas pada aplikasi Resepify (Universitas BSI).
-Analisis foto yang diberikan secara teliti. Kenali semua objek bahan mentah, sayuran, buah, daging/ikan, bumbu, telur, dan produk makanan yang terlihat di dalam kulkas atau meja dapur.
+Anda adalah Model Computer Vision & AI Agent Cerdas spesialis Deteksi Komprehensif Bahan Makanan Segar, Belanjaan Pasar Tradisional, & Isi Kulkas pada sistem Resepify (Universitas BSI).
+
+TUGAS UTAMA: LAKUKAN DETEKSI LENGKAP & MENYELURUH (DENSE OBJECT DETECTION):
+1. Pindai foto secara teliti dari ujung ke ujung, termasuk di dalam kantong plastik bening, keranjang/tampah, maupun rak kulkas.
+2. PENTING: JANGAN BATASI HANYA PADA 2 ATAU 3 BAHAN! Jika dalam gambar terdapat banyak bahan makanan belanjaan/sayuran/bumbu, kenali dan pisahkan SEMUA jenis bahan yang terlihat satu per satu (targetkan mendeteksi 8 sampai 25 item bahan makanan jika terlihat banyak!).
+3. Kenali setiap objek bahan yang tampak, seperti:
+   - Sayuran: Wortel, Kentang, Kol/Kubis, Kembang Kol, Brokoli, Labu Siam, Jagung Manis, Timun, Terong Ungu, Kangkung, Bayam, Sawi/Pakcoy, Buncis, Kacang Panjang, Tomat Segar.
+   - Bumbu Dapur: Bawang Merah, Bawang Putih, Cabai Rawit Merah, Cabai Rawit Hijau, Cabai Merah Keriting, Daun Bawang, Seledri, Jahe, Kunyit, Serai, Lengkuas.
+   - Protein: Telur Ayam, Tahu, Tempe, Daging Ayam, Daging Sapi, Ikan Segar, Udang, Bakso, Sosis.
+   - Buah & Karbohidrat: Apel, Jeruk, Pisang, Beras, Mie.
+4. Tentukan takaran/jumlah perkiraan yang wajar dan satuan yang umum digunakan di Indonesia (butir, ikat, buah, siung, gram, bungkus).
+5. Tentukan estimasi daya tahan simpan (typical_shelf_life_days) dan lokasi simpan terbaik ("Kulkas (Chiller)", "Freezer", "Lemari Kering (Pantry)").
 
 Kembalikan respon HANYA dalam format JSON String terstruktur dengan skema berikut:
 {
+  "summary": "Ringkasan komprehensif AI mendeteksi X jenis bahan makanan dari foto yang diunggah.",
   "detected_items": [
     {
-      "item_name": "Nama Bahan dalam Bahasa Indonesia baku (contoh: Bawang Merah, Telur Ayam, Tomat Segar)",
-      "category": "Kategori bahan (pilih dari: Sayuran, Protein Hewani, Protein Nabati, Bumbu Dapur, Karbohidrat, Buah, Susu & Olahan)",
+      "item_name": "Nama Bahan Baku Bahasa Indonesia (contoh: Wortel Segar, Cabai Rawit Merah, Daun Bawang, Kentang Dieng, Jagung Manis)",
+      "category": "Pilih salah satu: Sayuran, Protein Hewani, Protein Nabati, Bumbu Dapur, Karbohidrat, Buah, Susu & Olahan, Saus & Minyak",
       "estimated_quantity": 2.0,
-      "unit": "Satuan (misal: butir, ikat, buah, siung, gram, bungkus)",
+      "unit": "Satuan (misal: buah, ikat, butir, siung, batang, bungkus, gram)",
       "confidence_score": 0.95,
       "typical_shelf_life_days": 7,
       "storage_location": "Kulkas (Chiller)",
-      "freshness_notes": "Kondisi bahan tampak segar dan baik"
+      "freshness_notes": "Kondisi fisik bahan tampak segar dan baik"
     }
-  ],
-  "summary": "Ringkasan singkat hasil penglihatan AI tentang isi kulkas/bahan makanan yang terdeteksi."
+  ]
 }
 PROMPT;
 
@@ -219,7 +234,13 @@ PROMPT;
             try {
                 // Siapkan data gambar base64
                 $imageData = $imagePathOrBase64;
-                if (file_exists($imagePathOrBase64)) {
+                if (filter_var($imagePathOrBase64, FILTER_VALIDATE_URL)) {
+                    $dl = Http::withoutVerifying()->timeout(20)->get($imagePathOrBase64);
+                    if ($dl->successful()) {
+                        $imageData = base64_encode($dl->body());
+                        $mimeType = $dl->header('Content-Type') ?: 'image/jpeg';
+                    }
+                } elseif (file_exists($imagePathOrBase64)) {
                     $imageData = base64_encode(file_get_contents($imagePathOrBase64));
                     $mimeType = mime_content_type($imagePathOrBase64) ?: $mimeType;
                 } elseif (str_contains($imagePathOrBase64, ';base64,')) {
@@ -246,7 +267,7 @@ PROMPT;
                     'generationConfig' => [
                         'responseMimeType' => 'application/json',
                         'temperature' => 0.2,
-                        'maxOutputTokens' => 4096,
+                        'maxOutputTokens' => 8192,
                     ]
                 ];
 
@@ -648,39 +669,62 @@ PROMPT;
      */
     protected function getMockRecipeResponse(array $ingredients, string $cuisine, string $mealType): array
     {
-        $names = array_map(function ($item) {
-            return is_array($item) ? ($item['name'] ?? $item['item_name']) : (string) $item;
-        }, $ingredients);
+        $names = array_values(array_filter(array_map(function ($item) {
+            $name = is_array($item) ? ($item['name'] ?? $item['item_name'] ?? '') : (string) $item;
+            return trim($name);
+        }, $ingredients)));
 
-        $firstIngredient = $names[0] ?? 'Telur Ayam';
-        $secondIngredient = $names[1] ?? 'Tahu Sutra';
-        $thirdIngredient = $names[2] ?? 'Bawang Putih';
+        $count = count($names);
+        $first = $names[0] ?? 'Telur Ayam';
+        $second = $names[1] ?? ($count > 1 ? $names[1] : 'Bawang Merah');
+        $third = $names[2] ?? ($count > 2 ? $names[2] : 'Bawang Putih');
+
+        if ($count === 1) {
+            $title = "Tumis Gurih Spesial {$first} Bumbu Bawang Ala Resepify";
+            $descBahan = "bahan utama {$first}";
+        } elseif ($count === 2) {
+            $title = "Tumis {$first} & {$second} Saus Tiram Gurih Ala Resepify";
+            $descBahan = "perpaduan {$first} dan {$second}";
+        } else {
+            $title = "Tumis Campur Spesial {$first}, {$second} & {$third} Khas Nusantara";
+            $descBahan = "kombinasi lezat " . implode(', ', array_slice($names, 0, 3));
+        }
+
+        $used = [];
+        foreach ($names as $idx => $name) {
+            $used[] = [
+                'name' => $name,
+                'quantity' => ($idx === 0 ? '250' : '150'),
+                'unit' => ($idx === 0 ? 'gram' : 'gram/buah'),
+                'source' => 'pantry'
+            ];
+        }
+
+        if (empty($used)) {
+            $used[] = ['name' => 'Bahan Segar', 'quantity' => '200', 'unit' => 'gram', 'source' => 'pantry'];
+        }
 
         return [
-            'title' => "Tumis Gurih Spesial {$firstIngredient} & {$secondIngredient} Ala Resepify",
-            'description' => "Hidangan lezat kaya aroma yang memadukan {$firstIngredient} dan {$secondIngredient} dengan balutan saus gurih manis khas Nusantara. Sangat praktis, hemat waktu, dan bergizi seimbang untuk mahasiswa.",
+            'title' => $title,
+            'description' => "Hidangan praktis kaya cita rasa yang memaksimalkan {$descBahan} dari inventaris kulkas Anda dengan balutan bumbu gurih khas {$cuisine}. Sehat, hemat, dan tidak ada bahan makanan yang terbuang.",
             'cooking_time_minutes' => 25,
             'difficulty' => 'Mudah',
             'servings' => 2,
             'cuisine_type' => $cuisine,
             'meal_type' => $mealType,
-            'used_ingredients' => [
-                ['name' => $firstIngredient, 'quantity' => '250', 'unit' => 'gram', 'source' => 'pantry'],
-                ['name' => $secondIngredient, 'quantity' => '2', 'unit' => 'potong', 'source' => 'pantry'],
-                ['name' => $thirdIngredient, 'quantity' => '3', 'unit' => 'siung', 'source' => 'pantry'],
-            ],
+            'used_ingredients' => $used,
             'missing_ingredients' => [
-                ['name' => 'Kecap Manis', 'quantity' => '2', 'unit' => 'sdm', 'is_staple' => true],
+                ['name' => 'Kecap Manis Bango', 'quantity' => '2', 'unit' => 'sdm', 'is_staple' => true],
                 ['name' => 'Saus Tiram', 'quantity' => '1', 'unit' => 'sdm', 'is_staple' => true],
-                ['name' => 'Minyak Goreng', 'quantity' => '2', 'unit' => 'sdm', 'is_staple' => true],
-                ['name' => 'Garam & Merica', 'quantity' => 'Secukupnya', 'unit' => 'sejumput', 'is_staple' => true],
+                ['name' => 'Minyak Goreng Sawit', 'quantity' => '2', 'unit' => 'sdm', 'is_staple' => true],
+                ['name' => 'Garam & Merica Bubuk', 'quantity' => 'Secukupnya', 'unit' => 'sejumput', 'is_staple' => true],
             ],
             'instructions' => [
-                ['step_number' => 1, 'action' => "Cuci bersih {$firstIngredient} dan potong {$secondIngredient} menjadi ukuran dadu sedang.", 'estimated_minutes' => 5],
-                ['step_number' => 2, 'action' => "Cincang halus {$thirdIngredient}. Panaskan 2 sdm minyak di wajan dengan api sedang, lalu tumis hingga harum keemasan.", 'estimated_minutes' => 4],
-                ['step_number' => 3, 'action' => "Masukkan {$firstIngredient}, masak hingga berubah warna dan mengeluarkan aroma sedap.", 'estimated_minutes' => 6],
-                ['step_number' => 4, 'action' => "Tambahkan {$secondIngredient}, tuang kecap manis, saus tiram, sejumput garam dan merica bubuk. Aduk perlahan agar potongan tidak hancur.", 'estimated_minutes' => 5],
-                ['step_number' => 5, 'action' => 'Koreksi rasa, angkat dan sajikan selagi hangat bersama nasi putih pulen.', 'estimated_minutes' => 5],
+                ['step_number' => 1, 'action' => "Cuci bersih seluruh bahan pilihan Anda (" . implode(', ', array_slice($names, 0, 3)) . "), lalu potong-potong sesuai selera.", 'estimated_minutes' => 5],
+                ['step_number' => 2, 'action' => "Panaskan 2 sdm minyak di wajan dengan api sedang, lalu tumis irisan bawang dan bumbu aromatik hingga harum keemasan.", 'estimated_minutes' => 4],
+                ['step_number' => 3, 'action' => "Masukkan {$first}" . ($count > 1 ? " dan {$second}" : "") . ", aduk merata dan masak selama 5 menit hingga matang.", 'estimated_minutes' => 6],
+                ['step_number' => 4, 'action' => "Tuang kecap manis, saus tiram, sejumput garam dan merica. Aduk perlahan agar bumbu meresap sempurna ke dalam masakan.", 'estimated_minutes' => 5],
+                ['step_number' => 5, 'action' => 'Koreksi rasa sesuai selera, angkat dan sajikan hangat bersama nasi putih pulen.', 'estimated_minutes' => 5],
             ],
             'nutrition_facts' => [
                 'calories_kcal' => 365,
@@ -689,18 +733,128 @@ PROMPT;
                 'fat_g' => 13,
                 'fiber_g' => 4
             ],
-            'chef_tips' => 'Gunakan api besar di menit terakhir untuk menghasilkan aroma wok-hei yang harum khas restoran oriental!'
+            'chef_tips' => 'Gunakan api besar sebentar di menit terakhir sebelum diangkat untuk menghasilkan aroma harum sedap ala koki profesional!'
         ];
     }
 
     /**
-     * Mock Hasil Vision Deteksi Bahan
+     * Mock Hasil Vision Deteksi Bahan (Koleksi Lengkap Belanjaan Pasar / Kulkas)
      */
     protected function getMockVisionResponse(): array
     {
         return [
-            'summary' => 'Berhasil mendeteksi 5 bahan makanan segar dari tangkapan visual kulkas dengan tingkat keyakinan tinggi.',
+            'summary' => 'Berhasil mendeteksi 12 bahan makanan segar dan bumbu dapur dari tangkapan visual kulkas/belanjaan pasar dengan tingkat akurasi tinggi.',
             'detected_items' => [
+                [
+                    'item_name' => 'Wortel Segar',
+                    'category' => 'Sayuran',
+                    'estimated_quantity' => 4.0,
+                    'unit' => 'buah',
+                    'confidence_score' => 0.98,
+                    'typical_shelf_life_days' => 14,
+                    'storage_location' => 'Kulkas (Chiller)',
+                    'freshness_notes' => 'Warna oranye cerah, tekstur padat renyah'
+                ],
+                [
+                    'item_name' => 'Cabai Rawit Merah',
+                    'category' => 'Bumbu Dapur',
+                    'estimated_quantity' => 15.0,
+                    'unit' => 'buah',
+                    'confidence_score' => 0.96,
+                    'typical_shelf_life_days' => 10,
+                    'storage_location' => 'Kulkas (Chiller)',
+                    'freshness_notes' => 'Tangkai hijau segar dan kulit mengkilap'
+                ],
+                [
+                    'item_name' => 'Daun Bawang',
+                    'category' => 'Bumbu Dapur',
+                    'estimated_quantity' => 3.0,
+                    'unit' => 'batang',
+                    'confidence_score' => 0.95,
+                    'typical_shelf_life_days' => 7,
+                    'storage_location' => 'Kulkas (Chiller)',
+                    'freshness_notes' => 'Daun hijau segar tegak dan bersih'
+                ],
+                [
+                    'item_name' => 'Kentang Dieng',
+                    'category' => 'Karbohidrat',
+                    'estimated_quantity' => 4.0,
+                    'unit' => 'buah',
+                    'confidence_score' => 0.95,
+                    'typical_shelf_life_days' => 25,
+                    'storage_location' => 'Lemari Kering (Pantry)',
+                    'freshness_notes' => 'Kulit bersih tanpa tunas'
+                ],
+                [
+                    'item_name' => 'Jagung Manis',
+                    'category' => 'Sayuran',
+                    'estimated_quantity' => 2.0,
+                    'unit' => 'tongkol',
+                    'confidence_score' => 0.94,
+                    'typical_shelf_life_days' => 7,
+                    'storage_location' => 'Kulkas (Chiller)',
+                    'freshness_notes' => 'Biji jagung penuh dan berkilau'
+                ],
+                [
+                    'item_name' => 'Kubis Putih',
+                    'category' => 'Sayuran',
+                    'estimated_quantity' => 1.0,
+                    'unit' => 'buah',
+                    'confidence_score' => 0.94,
+                    'typical_shelf_life_days' => 14,
+                    'storage_location' => 'Kulkas (Chiller)',
+                    'freshness_notes' => 'Krop padat dan daun luar bersih'
+                ],
+                [
+                    'item_name' => 'Bawang Merah',
+                    'category' => 'Bumbu Dapur',
+                    'estimated_quantity' => 8.0,
+                    'unit' => 'siung',
+                    'confidence_score' => 0.93,
+                    'typical_shelf_life_days' => 20,
+                    'storage_location' => 'Lemari Kering (Pantry)',
+                    'freshness_notes' => 'Umbi padat kering sempurna'
+                ],
+                [
+                    'item_name' => 'Bawang Putih',
+                    'category' => 'Bumbu Dapur',
+                    'estimated_quantity' => 6.0,
+                    'unit' => 'siung',
+                    'confidence_score' => 0.94,
+                    'typical_shelf_life_days' => 25,
+                    'storage_location' => 'Lemari Kering (Pantry)',
+                    'freshness_notes' => 'Siung utuh dan kulit putih bersih'
+                ],
+                [
+                    'item_name' => 'Tomat Merah Segar',
+                    'category' => 'Sayuran',
+                    'estimated_quantity' => 3.0,
+                    'unit' => 'buah',
+                    'confidence_score' => 0.96,
+                    'typical_shelf_life_days' => 7,
+                    'storage_location' => 'Kulkas (Chiller)',
+                    'freshness_notes' => 'Kondisi ranum dan kenyal'
+                ],
+                [
+                    'item_name' => 'Tahu Putih Sutra',
+                    'category' => 'Protein Nabati',
+                    'estimated_quantity' => 1.0,
+                    'unit' => 'kotak',
+                    'confidence_score' => 0.92,
+                    'typical_shelf_life_days' => 4,
+                    'storage_location' => 'Kulkas (Chiller)',
+                    'freshness_notes' => 'Tekstur lembut dan berair bersih'
+                ],
+                [
+                    'item_name' => 'Tempe Kedelai Segar',
+                    'category' => 'Protein Nabati',
+                    'estimated_quantity' => 1.0,
+                    'unit' => 'papan',
+                    'confidence_score' => 0.95,
+                    'typical_shelf_life_days' => 4,
+                    'storage_location' => 'Kulkas (Chiller)',
+                    'freshness_notes' => 'Miselium jamur putih bersih dan padat'
+                ],
                 [
                     'item_name' => 'Telur Ayam Ras',
                     'category' => 'Protein Hewani',
@@ -710,46 +864,6 @@ PROMPT;
                     'typical_shelf_life_days' => 21,
                     'storage_location' => 'Kulkas (Chiller)',
                     'freshness_notes' => 'Cangkang bersih dan utuh'
-                ],
-                [
-                    'item_name' => 'Wortel Segar',
-                    'category' => 'Sayuran',
-                    'estimated_quantity' => 3.0,
-                    'unit' => 'buah',
-                    'confidence_score' => 0.94,
-                    'typical_shelf_life_days' => 10,
-                    'storage_location' => 'Kulkas (Chiller)',
-                    'freshness_notes' => 'Warna oranye cerah, tekstur renyah'
-                ],
-                [
-                    'item_name' => 'Bawang Bombay',
-                    'category' => 'Bumbu Dapur',
-                    'estimated_quantity' => 1.0,
-                    'unit' => 'buah',
-                    'confidence_score' => 0.92,
-                    'typical_shelf_life_days' => 14,
-                    'storage_location' => 'Lemari Kering (Pantry)',
-                    'freshness_notes' => 'Kulit kering sempurna'
-                ],
-                [
-                    'item_name' => 'Tahu Putih Sutra',
-                    'category' => 'Protein Nabati',
-                    'estimated_quantity' => 1.0,
-                    'unit' => 'bungkus',
-                    'confidence_score' => 0.90,
-                    'typical_shelf_life_days' => 4,
-                    'storage_location' => 'Kulkas (Chiller)',
-                    'freshness_notes' => 'Disimpan dalam air bersih'
-                ],
-                [
-                    'item_name' => 'Kangkung Segar',
-                    'category' => 'Sayuran',
-                    'estimated_quantity' => 1.0,
-                    'unit' => 'ikat',
-                    'confidence_score' => 0.93,
-                    'typical_shelf_life_days' => 3,
-                    'storage_location' => 'Kulkas (Chiller)',
-                    'freshness_notes' => 'Daun hijau segar tanpa layu'
                 ],
             ]
         ];

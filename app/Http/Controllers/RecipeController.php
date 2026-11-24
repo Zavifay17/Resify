@@ -38,7 +38,7 @@ class RecipeController extends Controller
 
         $inventoryItems = KitchenInventory::where('user_id', $user->id)
             ->active()
-            ->orderBy('expiration_date', 'asc')
+            ->orderByRaw("CASE WHEN expiration_date < CURRENT_DATE THEN 1 ELSE 0 END ASC, expiration_date ASC, created_at DESC")
             ->get();
 
         $jumlahArsip = KitchenInventory::where('user_id', $user->id)->archived()->count();

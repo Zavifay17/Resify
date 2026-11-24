@@ -60,7 +60,38 @@ class InventoryController extends Controller
             }
         }
 
-        $items = $query->orderBy('expiration_date', 'asc')->paginate(12)->withQueryString();
+        // Sorting alur inventaris:
+        // Ketentuan: Bahan kedaluwarsa otomatis ditaruh di halaman belakang (bukan halaman terdepan),
+        // sedangkan bahan aktif yang baru diinput (dari deteksi foto) tampil terdepan secara default.
+        $sort = $request->input('sort', 'terbaru');
+        $isFilteringExpiredOnly = in_array($request->status, ['expired', 'archived'], true);
+
+        if ($isFilteringExpiredOnly) {
+            match ($sort) {
+                'terlama' => $query->orderBy('created_at', 'asc'),
+                'kadaluarsa_terdekat' => $query->orderBy('expiration_date', 'asc'),
+                'nama_asc' => $query->orderBy('item_name', 'asc'),
+                'nama_desc' => $query->orderBy('item_name', 'desc'),
+                'jumlah_terbanyak' => $query->orderBy('quantity', 'desc'),
+                default => $query->orderBy('created_at', 'desc'),
+            };
+        } else {
+            // Priority 0 = Bahan Segar & Aktif (halaman terdepan)
+            // Priority 1 = Bahan yang sudah kedaluwarsa (ditaruh di halaman paling belakang)
+            $expiredBackSql = "CASE WHEN expiration_date < CURRENT_DATE THEN 1 ELSE 0 END ASC";
+
+            match ($sort) {
+                'terlama' => $query->orderByRaw($expiredBackSql)->orderBy('created_at', 'asc'),
+                'kadaluarsa_terdekat' => $query->orderByRaw($expiredBackSql)->orderBy('expiration_date', 'asc')->orderBy('created_at', 'desc'),
+                'kadaluarsa_terlama' => $query->orderByRaw($expiredBackSql)->orderBy('expiration_date', 'desc')->orderBy('created_at', 'desc'),
+                'nama_asc' => $query->orderByRaw($expiredBackSql)->orderBy('item_name', 'asc'),
+                'nama_desc' => $query->orderByRaw($expiredBackSql)->orderBy('item_name', 'desc'),
+                'jumlah_terbanyak' => $query->orderByRaw($expiredBackSql)->orderBy('quantity', 'desc'),
+                default => $query->orderByRaw($expiredBackSql)->orderBy('created_at', 'desc'), // Default: Bahan terbaru masuk (hasil scan foto) paling atas
+            };
+        }
+
+        $items = $query->paginate(12)->withQueryString();
         $masterIngredients = Ingredient::orderBy('name', 'asc')->get();
         $stats = $this->inventoryService->getDashboardStats($user->id);
 

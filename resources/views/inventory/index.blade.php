@@ -119,6 +119,19 @@
                 </div>
 
                 <div class="filter-group">
+                    <h4>Urutan / Sortir</h4>
+                    <select name="sort" onchange="this.form.submit()" class="select">
+                        <option value="terbaru" {{ request('sort', 'terbaru') === 'terbaru' ? 'selected' : '' }}>Terbaru Masuk (Hasil Foto AI)</option>
+                        <option value="kadaluarsa_terdekat" {{ request('sort') === 'kadaluarsa_terdekat' ? 'selected' : '' }}>Batas Kadaluarsa Terdekat</option>
+                        <option value="kadaluarsa_terlama" {{ request('sort') === 'kadaluarsa_terlama' ? 'selected' : '' }}>Masa Simpan Terpanjang</option>
+                        <option value="terlama" {{ request('sort') === 'terlama' ? 'selected' : '' }}>Terlama Masuk</option>
+                        <option value="nama_asc" {{ request('sort') === 'nama_asc' ? 'selected' : '' }}>Nama Bahan (A - Z)</option>
+                        <option value="nama_desc" {{ request('sort') === 'nama_desc' ? 'selected' : '' }}>Nama Bahan (Z - A)</option>
+                        <option value="jumlah_terbanyak" {{ request('sort') === 'jumlah_terbanyak' ? 'selected' : '' }}>Stok Terbanyak</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
                     <h4>Lokasi Simpan</h4>
                     <select name="location" onchange="this.form.submit()" class="select">
                         <option value="all" {{ request('location') === 'all' || !request('location') ? 'selected' : '' }}>Semua Lokasi Simpan</option>
@@ -161,7 +174,23 @@
             <div class="card-head">
                 <div>
                     <h2>Daftar Bahan Makanan</h2>
-                    <span class="hint">Urut dari batas kedaluwarsa terdekat</span>
+                    <span class="hint">
+                        @if(request('sort') === 'kadaluarsa_terdekat')
+                            Urut batas kedaluwarsa terdekat &middot; Bahan yang sudah kadaluarsa ditaruh di halaman belakang
+                        @elseif(request('sort') === 'kadaluarsa_terlama')
+                            Urut masa simpan terlama &middot; Bahan kadaluarsa di halaman belakang
+                        @elseif(request('sort') === 'terlama')
+                            Urut bahan paling awal dimasukkan
+                        @elseif(request('sort') === 'nama_asc')
+                            Urut abjad nama bahan (A - Z)
+                        @elseif(request('sort') === 'nama_desc')
+                            Urut abjad nama bahan (Z - A)
+                        @elseif(request('sort') === 'jumlah_terbanyak')
+                            Urut dari jumlah stok terbanyak
+                        @else
+                            Bahan terbaru (hasil scan foto AI) tampil terdepan &middot; Bahan kadaluarsa otomatis ditaruh di halaman belakang
+                        @endif
+                    </span>
                 </div>
                 <span class="hint">{{ $items->count() }} bahan ditampilkan</span>
             </div>
@@ -193,7 +222,7 @@
                                 <tr class="{{ $item->is_archived ? 'is-archived' : '' }}">
                                     <td>
                                         <div class="flex-center gap-8">
-                                            <span class="text-muted">{{ $item->ingredient?->icon ?? '🥗' }}</span>
+                                            <span style="font-size:18px; line-height:1; flex:none">{{ $item->display_icon }}</span>
                                             <div class="flex-1" style="max-width:230px">
                                                 <div class="strong truncate" title="{{ $item->item_name }}">{{ $item->item_name }}</div>
                                                 @if($item->notes)

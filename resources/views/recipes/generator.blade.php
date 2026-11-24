@@ -205,7 +205,7 @@
                                  style="cursor:pointer; user-select:none; align-items:center;"
                                  :class="selectedIngredients.includes('{{ $item->item_name }}') ? 'is-on' : ''">
 
-                                <span style="font-size:18px; line-height:1; flex:none">{{ $item->ingredient?->icon ?? '🥗' }}</span>
+                                <span style="font-size:18px; line-height:1; flex:none">{{ $item->display_icon }}</span>
 
                                 <div class="flex-1">
                                     <span class="strong text-sm truncate" style="display:block">{{ $item->item_name }}</span>

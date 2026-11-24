@@ -85,6 +85,7 @@
                                 $chipClass = $badgeMap[$badge['severity']] ?? 'chip';
                             @endphp
                             <span class="chip {{ $chipClass }}" title="{{ $badge['label'] }}">
+                                <span style="font-size:14px; margin-right:4px">{{ $expItem->display_icon }}</span>
                                 {{ $expItem->item_name }}
                                 &middot; {{ $expItem->quantity }} {{ $expItem->unit }}
                                 &middot; {{ $expItem->expiry_label }}

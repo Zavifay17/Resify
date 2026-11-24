@@ -55,18 +55,31 @@ class IngredientSeeder extends Seeder
             // ==========================================
             // 3. PROTEIN NABATI TRADISIONAL
             // ==========================================
-            ['name' => 'Tempe Kedelai Segar', 'category' => 'Protein Nabati', 'default_unit' => 'papan', 'typical_shelf_life_days' => 4, 'calories_per_100g' => 193, 'icon' => '🧱', 'description' => 'Superfood lokal asli Indonesia kaya serat dan protein nabati'],
-            ['name' => 'Tahu Putih Sutra', 'category' => 'Protein Nabati', 'default_unit' => 'kotak', 'typical_shelf_life_days' => 3, 'calories_per_100g' => 76, 'icon' => '🧊', 'description' => 'Sangat lembut, menyerap kaldu gurih dengan sempurna'],
+            ['name' => 'Tempe Kedelai Segar', 'category' => 'Protein Nabati', 'default_unit' => 'papan', 'typical_shelf_life_days' => 4, 'calories_per_100g' => 193, 'icon' => '🥪', 'description' => 'Superfood lokal asli Indonesia kaya serat dan protein nabati'],
+            ['name' => 'Tahu Putih Sutra', 'category' => 'Protein Nabati', 'default_unit' => 'kotak', 'typical_shelf_life_days' => 3, 'calories_per_100g' => 76, 'icon' => '🧈', 'description' => 'Sangat lembut, menyerap kaldu gurih dengan sempurna'],
             ['name' => 'Tahu Kuning Bandung', 'category' => 'Protein Nabati', 'default_unit' => 'kotak', 'typical_shelf_life_days' => 4, 'calories_per_100g' => 80, 'icon' => '🧈', 'description' => 'Gurih alami beraroma kunyit tanpa bahan pengawet'],
-            ['name' => 'Tahu Pong / Goreng', 'category' => 'Protein Nabati', 'default_unit' => 'buah', 'typical_shelf_life_days' => 5, 'calories_per_100g' => 115, 'icon' => '🟤', 'description' => 'Rongga dalamnya siap diisi sayuran atau disiram petis'],
+            ['name' => 'Tahu Pong / Goreng', 'category' => 'Protein Nabati', 'default_unit' => 'buah', 'typical_shelf_life_days' => 5, 'calories_per_100g' => 115, 'icon' => '🧈', 'description' => 'Rongga dalamnya siap diisi sayuran atau disiram petis'],
 
             // ==========================================
             // 4. SAYURAN SEGAR NUSANTARA
             // ==========================================
-            ['name' => 'Kangkung Akar', 'category' => 'Sayuran', 'default_unit' => 'ikat', 'typical_shelf_life_days' => 3, 'calories_per_100g' => 19, 'icon' => '🥬', 'description' => 'Sayur hijau renyah untuk tumis terasi pedas abang resto'],
-            ['name' => 'Bayam Hijau Cabut', 'category' => 'Sayuran', 'default_unit' => 'ikat', 'typical_shelf_life_days' => 3, 'calories_per_100g' => 23, 'icon' => '🥬', 'description' => 'Kaya zat besi untuk sayur bening jagung manis'],
+            ['name' => 'Kangkung Akar', 'category' => 'Sayuran', 'default_unit' => 'ikat', 'typical_shelf_life_days' => 3, 'calories_per_100g' => 19, 'icon' => '🌿', 'description' => 'Sayur hijau renyah untuk tumis terasi pedas abang resto'],
+            ['name' => 'Bayam Hijau Cabut', 'category' => 'Sayuran', 'default_unit' => 'ikat', 'typical_shelf_life_days' => 3, 'calories_per_100g' => 23, 'icon' => '🌿', 'description' => 'Kaya zat besi untuk sayur bening jagung manis'],
+            ['name' => 'Wortel Segar', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 14, 'calories_per_100g' => 41, 'icon' => '🥕', 'description' => 'Warna oranye cerah, manis dan renyah untuk sop dan capcay'],
             ['name' => 'Wortel Brastagi', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 14, 'calories_per_100g' => 41, 'icon' => '🥕', 'description' => 'Warna oranye cerah, manis dan renyah untuk sop dan capcay'],
             ['name' => 'Kol / Kubis Segar', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 14, 'calories_per_100g' => 25, 'icon' => '🥬', 'description' => 'Tahan lama disimpan, cocok untuk mie goreng dan tongseng'],
+            ['name' => 'Kubis Putih', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 14, 'calories_per_100g' => 25, 'icon' => '🥬', 'description' => 'Renyah segar untuk lalapan, orak-arik telur, dan soto'],
+            ['name' => 'Selada Hijau', 'category' => 'Sayuran', 'default_unit' => 'ikat', 'typical_shelf_life_days' => 5, 'calories_per_100g' => 15, 'icon' => '🥬', 'description' => 'Daun renyah segar untuk salad, lalapan ayam bakar, dan gado-gado'],
+            ['name' => 'Paprika Merah', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 10, 'calories_per_100g' => 31, 'icon' => '🫑', 'description' => 'Manis segar penuh vitamin C untuk tumis sapi lada hitam'],
+            ['name' => 'Paprika Kuning', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 10, 'calories_per_100g' => 27, 'icon' => '🫑', 'description' => 'Warna kuning cerah penggugah selera tumisan kekinian'],
+            ['name' => 'Paprika Hijau', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 12, 'calories_per_100g' => 20, 'icon' => '🫑', 'description' => 'Aroma khas renyah untuk tumisan dan fajitas'],
+            ['name' => 'Timun Jepang', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 10, 'calories_per_100g' => 15, 'icon' => '🥒', 'description' => 'Kaya air dan renyah tanpa biji berlebih untuk salad dan acar'],
+            ['name' => 'Mentimun', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 10, 'calories_per_100g' => 15, 'icon' => '🥒', 'description' => 'Lalapan segar pendingin pedas dan pelengkap acar'],
+            ['name' => 'Terong Ungu', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 7, 'calories_per_100g' => 25, 'icon' => '🍆', 'description' => 'Tekstur lembut lezat untuk terong balado dan sayur lodeh'],
+            ['name' => 'Kembang Kol', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 8, 'calories_per_100g' => 25, 'icon' => '🥦', 'description' => 'Sayuran bunga gurih renyah untuk capcay kuah kental'],
+            ['name' => 'Brokoli Segar', 'category' => 'Sayuran', 'default_unit' => 'bonggol', 'typical_shelf_life_days' => 6, 'calories_per_100g' => 34, 'icon' => '🥦', 'description' => 'Superfood kaya serat dan vitamin untuk tumisan sehat'],
+            ['name' => 'Daun Bawang', 'category' => 'Bumbu Dapur', 'default_unit' => 'batang', 'typical_shelf_life_days' => 7, 'calories_per_100g' => 32, 'icon' => '🌿', 'description' => 'Aroma wangi esensial martabak telur, sop ayam, dan nasi goreng'],
+            ['name' => 'Seledri Segar', 'category' => 'Bumbu Dapur', 'default_unit' => 'ikat', 'typical_shelf_life_days' => 7, 'calories_per_100g' => 16, 'icon' => '🌿', 'description' => 'Taburan harum wajib kuah bakso dan soto'],
             ['name' => 'Labu Siam', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 10, 'calories_per_100g' => 19, 'icon' => '🍐', 'description' => 'Segar dan lembut untuk sayur lodeh dan sayur asem'],
             ['name' => 'Kacang Panjang', 'category' => 'Sayuran', 'default_unit' => 'ikat', 'typical_shelf_life_days' => 6, 'calories_per_100g' => 47, 'icon' => '🫛', 'description' => 'Renyah untuk tumisan tempe orek dan gado-gado'],
             ['name' => 'Tauge / Kecambah Segar', 'category' => 'Sayuran', 'default_unit' => 'gram', 'typical_shelf_life_days' => 3, 'calories_per_100g' => 34, 'icon' => '🌱', 'description' => 'Kress segar penambah selera soto, rawon, dan tahu telur'],
@@ -74,8 +87,8 @@ class IngredientSeeder extends Seeder
             ['name' => 'Daun Singkong Muda', 'category' => 'Sayuran', 'default_unit' => 'ikat', 'typical_shelf_life_days' => 4, 'calories_per_100g' => 73, 'icon' => '🌿', 'description' => 'Sayuran wajib khas rumah makan Padang untuk gulai daun singkong'],
             ['name' => 'Daun Kemangi', 'category' => 'Sayuran', 'default_unit' => 'ikat', 'typical_shelf_life_days' => 3, 'calories_per_100g' => 22, 'icon' => '🍃', 'description' => 'Aroma wangi khas untuk pepes, rica-rica, dan lalapan'],
             ['name' => 'Tomat Merah Segar', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 7, 'calories_per_100g' => 18, 'icon' => '🍅', 'description' => 'Rasa asam segar pembawa kesegaran alami masakan'],
-            ['name' => 'Mentimun', 'category' => 'Sayuran', 'default_unit' => 'buah', 'typical_shelf_life_days' => 10, 'calories_per_100g' => 15, 'icon' => '🥒', 'description' => 'Lalapan segar pendingin pedas dan pelengkap acar'],
             ['name' => 'Petai Kupas', 'category' => 'Sayuran', 'default_unit' => 'papan', 'typical_shelf_life_days' => 10, 'calories_per_100g' => 142, 'icon' => '🫘', 'description' => 'Aroma tajam pembangkit selera sambal goreng ati dan nasi goreng'],
+            ['name' => 'Apel Segar', 'category' => 'Buah', 'default_unit' => 'buah', 'typical_shelf_life_days' => 21, 'calories_per_100g' => 52, 'icon' => '🍎', 'description' => 'Manis renyah kaya vitamin untuk penutup makan sehat'],
 
             // ==========================================
             // 5. KARBOHIDRAT & STAPLE MAKANAN INDONESIA
