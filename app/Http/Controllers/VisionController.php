@@ -92,6 +92,21 @@ class VisionController extends Controller
             $imagePath = file_exists($tempPath) ? $tempPath : $imageUrl;
         } elseif ($request->filled('image_base64')) {
             $imagePath = $request->image_base64;
+            // Jika dikirim berupa base64 data URI dari capture kamera langsung
+            if (str_contains($request->image_base64, ';base64,')) {
+                try {
+                    $parts = explode(';base64,', $request->image_base64);
+                    $rawHeader = $parts[0];
+                    $mimeType = str_replace('data:', '', $rawHeader) ?: 'image/jpeg';
+                    $decoded = base64_decode($parts[1]);
+                    $ext = str_contains($mimeType, 'png') ? 'png' : 'jpg';
+                    $filename = 'capture_' . uniqid() . '.' . $ext;
+                    \Illuminate\Support\Facades\Storage::put('public/vision_uploads/' . $filename, $decoded);
+                    $imageUrl = asset('storage/vision_uploads/' . $filename);
+                } catch (\Throwable $e) {
+                    // Simpan fallback jika error
+                }
+            }
         } else {
             return response()->json([
                 'success' => false,

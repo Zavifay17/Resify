@@ -4,38 +4,186 @@
 
 @section('content')
 <div x-data="{
-    loading: false,
+    activeTab: 'camera', // 'camera' or 'upload'
+    stream: null,
+    cameraActive: false,
+    cameraError: null,
+    capturedImage: null,
     previewUrl: null,
+    selectedSample: null,
+    loading: false,
     detectedItems: [],
     summary: '',
-    selectedSample: null,
-    isSimulated: false,
     latency: 0,
 
-    selectSample(key, url) {
-        this.selectedSample = key;
-        this.previewUrl = url;
+    init() {
+        // Otomatis buka kamera jika di tab kamera
+        this.$nextTick(() => {
+            if (this.activeTab === 'camera') {
+                this.startCamera();
+            }
+        });
+    },
+
+    startCamera() {
+        this.cameraError = null;
+        this.capturedImage = null;
+        this.previewUrl = null;
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            this.cameraError = 'Perangkat atau browser Anda tidak mendukung akses kamera langsung. Silakan gunakan tab Unggah Berkas.';
+            this.activeTab = 'upload';
+            return;
+        }
+
+        const constraints = {
+            video: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(mediaStream => {
+                this.stream = mediaStream;
+                this.cameraActive = true;
+                this.$nextTick(() => {
+                    const video = document.getElementById('camera_feed');
+                    if (video) {
+                        video.srcObject = mediaStream;
+                        video.play().catch(e => console.log('Autoplay prevented:', e));
+                    }
+                });
+            })
+            .catch(err => {
+                // Fallback ke kamera standar jika environment/belakang gagal
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(mediaStream => {
+                        this.stream = mediaStream;
+                        this.cameraActive = true;
+                        this.$nextTick(() => {
+                            const video = document.getElementById('camera_feed');
+                            if (video) {
+                                video.srcObject = mediaStream;
+                                video.play().catch(e => console.log('Autoplay prevented:', e));
+                            }
+                        });
+                    })
+                    .catch(e => {
+                        console.error('Kamera gagal dibuka:', e);
+                        this.cameraError = 'Izin kamera belum diberikan atau kamera tidak terdeteksi. Silakan berikan izin akses kamera atau beralih ke tab Unggah Berkas.';
+                        this.cameraActive = false;
+                    });
+            });
+    },
+
+    stopCamera() {
+        if (this.stream) {
+            this.stream.getTracks().forEach(track => track.stop());
+            this.stream = null;
+        }
+        this.cameraActive = false;
+    },
+
+    switchTab(tab) {
+        this.activeTab = tab;
+        if (tab === 'camera') {
+            if (!this.capturedImage) {
+                this.startCamera();
+            }
+        } else {
+            this.stopCamera();
+        }
+    },
+
+    capturePhoto() {
+        const video = document.getElementById('camera_feed');
+        if (!video) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+        this.capturedImage = dataUrl;
+        this.previewUrl = dataUrl;
+        this.stopCamera();
+    },
+
+    retakePhoto() {
+        this.capturedImage = null;
+        this.previewUrl = null;
         this.detectedItems = [];
         this.summary = '';
+        this.startCamera();
     },
 
     onFileChange(e) {
         const file = e.target.files[0];
         if (file) {
             this.selectedSample = null;
+            this.capturedImage = null;
             this.previewUrl = URL.createObjectURL(file);
             this.detectedItems = [];
             this.summary = '';
         }
     },
 
+    selectSample(key, url) {
+        this.selectedSample = key;
+        this.capturedImage = null;
+        this.previewUrl = url;
+        this.detectedItems = [];
+        this.summary = '';
+    },
+
+    removeItem(index) {
+        this.detectedItems.splice(index, 1);
+        if (this.detectedItems.length === 0) {
+            this.summary = 'Semua bahan hasil deteksi telah dibersihkan.';
+        }
+    },
+
+    getIcon(name) {
+        if (!name) return '🥦';
+        const raw = name.toLowerCase();
+        if (raw.includes('wortel')) return '🥕';
+        if (raw.includes('paprika')) return '🫑';
+        if (raw.includes('timun') || raw.includes('mentimun')) return '🥒';
+        if (raw.includes('terong')) return '🍆';
+        if (raw.includes('jagung')) return '🌽';
+        if (raw.includes('tomat')) return '🍅';
+        if (raw.includes('kentang')) return '🥔';
+        if (raw.includes('brokoli') || raw.includes('kembang kol')) return '🥦';
+        if (raw.includes('kubis') || raw.includes('kol') || raw.includes('selada') || raw.includes('sawi') || raw.includes('pakcoy')) return '🥬';
+        if (raw.includes('kangkung') || raw.includes('bayam') || raw.includes('daun') || raw.includes('seledri')) return '🌿';
+        if (raw.includes('cabai') || raw.includes('cabe') || raw.includes('rawit')) return '🌶️';
+        if (raw.includes('bawang putih')) return '🧄';
+        if (raw.includes('bawang')) return '🧅';
+        if (raw.includes('telur')) return '🥚';
+        if (raw.includes('ayam') || raw.includes('daging')) return '🍗';
+        if (raw.includes('ikan') || raw.includes('udang')) return '🐟';
+        if (raw.includes('tahu')) return '🧈';
+        if (raw.includes('tempe')) return '🥪';
+        if (raw.includes('beras') || raw.includes('nasi')) return '🍚';
+        if (raw.includes('mie')) return '🍜';
+        if (raw.includes('apel')) return '🍎';
+        if (raw.includes('jeruk') || raw.includes('lemon')) return '🍋';
+        return '🥕';
+    },
+
     analyzePhoto() {
         const fileInput = document.getElementById('camera_input');
-        if (!fileInput.files[0] && !this.selectedSample) {
+        const hasFile = fileInput && fileInput.files && fileInput.files[0];
+
+        if (!this.capturedImage && !hasFile && !this.selectedSample) {
             Swal.fire({
                 icon: 'warning',
-                title: 'Pilih Gambar Terlebih Dahulu',
-                text: 'Silakan unggah foto kulkas Anda atau pilih salah satu contoh foto pengujian.',
+                title: 'Belum Ada Foto',
+                text: 'Silakan ambil foto menggunakan kamera atau pilih foto kulkas Anda.',
                 background: '#111C38',
                 color: '#fff'
             });
@@ -43,9 +191,14 @@
         }
 
         this.loading = true;
+        this.detectedItems = [];
+        this.summary = '';
+
         const formData = new FormData();
 
-        if (fileInput.files[0]) {
+        if (this.capturedImage) {
+            formData.append('image_base64', this.capturedImage);
+        } else if (hasFile) {
             formData.append('image', fileInput.files[0]);
         } else if (this.selectedSample) {
             formData.append('sample', this.selectedSample);
@@ -64,7 +217,6 @@
             if (res.success && res.data) {
                 this.detectedItems = res.data.detected_items || [];
                 this.summary = res.data.summary || '';
-                this.isSimulated = res.is_simulated || false;
                 this.latency = res.latency_ms || 0;
                 if (res.image_url) {
                     this.previewUrl = res.image_url;
@@ -73,8 +225,8 @@
             } else {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Analisis Gagal',
-                    text: res.message || 'Terjadi kesalahan saat memproses gambar.',
+                    title: 'Pemindaian Gagal',
+                    text: res.message || 'Terjadi kendala saat menganalisis foto bahan.',
                     background: '#111C38',
                     color: '#fff'
                 });
@@ -92,20 +244,16 @@
             });
         });
     }
-}">
+}" x-init="init()" class="stack-20">
 
-    {{-- Header halaman --}}
+    {{-- Header Halaman Sederhana --}}
     <div class="page-head">
         <div class="page-head-row">
             <div class="page-head-main">
-                <div class="page-head-meta">
-                    <span class="eyebrow"><i data-lucide="scan-line"></i> Computer Vision AI</span>
-                    <span class="chip chip-brand">Gemini Flash Vision</span>
-                </div>
-                <h1>Input Bahan Otomatis Lewat Foto</h1>
-                <p class="sub">Unggah foto isi kulkas atau meja dapur Anda. AI mengenali bahan makanan, kategori gizi, dan masa simpannya secara instan.</p>
+                <span class="eyebrow"><i data-lucide="scan-line"></i> Pemindai Cerdas</span>
+                <h1>Deteksi Bahan Masakan dari Foto</h1>
+                <p class="sub">Foto langsung isi kulkas atau meja dapur Anda, AI akan mengenali nama bahan dan mencatatnya ke inventaris secara otomatis.</p>
             </div>
-
             <div class="page-head-actions">
                 <a href="{{ route('inventory.index') }}" class="btn btn-secondary">
                     <i data-lucide="arrow-left"></i> Kembali ke Inventaris
@@ -114,204 +262,237 @@
         </div>
     </div>
 
-    {{-- Ruang kerja: panel unggah di kiri, hasil deteksi di kanan --}}
-    <div class="grid grid-side">
+    {{-- Layout Kerja 2 Kolom Bersih --}}
+    <div class="grid grid-side gap-20">
 
-        {{-- Panel kontrol --}}
+        {{-- Panel Kiri: Kamera Langsung atau Unggah Foto --}}
         <div class="card">
-            <div class="card-head">
-                <h3><i data-lucide="upload-cloud" style="width:15px;height:15px;vertical-align:-2px"></i> Unggah atau Pilih Foto Kulkas</h3>
+            {{-- Tab Pilihan: Kamera Langsung vs Unggah Berkas --}}
+            <div class="card-head" style="padding:10px 16px; background:var(--bg-subtle); border-bottom:1px solid var(--border)">
+                <div class="flex gap-8" style="width:100%">
+                    <button type="button" @click="switchTab('camera')"
+                        class="btn btn-sm flex-1 flex-center gap-6"
+                        :class="activeTab === 'camera' ? 'btn-primary' : 'btn-ghost'">
+                        <i data-lucide="camera" style="width:14px;height:14px"></i>
+                        <span>Kamera Langsung</span>
+                    </button>
+                    <button type="button" @click="switchTab('upload')"
+                        class="btn btn-sm flex-1 flex-center gap-6"
+                        :class="activeTab === 'upload' ? 'btn-primary' : 'btn-ghost'">
+                        <i data-lucide="upload" style="width:14px;height:14px"></i>
+                        <span>Unggah File</span>
+                    </button>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="stack-16">
-                    <label for="camera_input" class="dropzone" style="display:block">
-                        <input type="file" id="camera_input" accept="image/*" @change="onFileChange($event)" class="hide">
 
-                        <div x-show="!previewUrl">
+            <div class="card-body">
+                {{-- Mode 1: Kamera Langsung (Webcam / HP Camera) --}}
+                <div x-show="activeTab === 'camera'" class="stack-16">
+                    {{-- Alert jika kamera error --}}
+                    <div x-show="cameraError" class="alert alert-warn" style="margin-bottom:0">
+                        <i data-lucide="alert-circle"></i>
+                        <div class="body text-xs" x-text="cameraError"></div>
+                    </div>
+
+                    {{-- Live Viewfinder (saat kamera aktif dan belum di-capture) --}}
+                    <div x-show="!capturedImage" style="position:relative; width:100%; border-radius:12px; overflow:hidden; background:#0f172a; aspect-ratio:4/3; display:flex; align-items:center; justify-content:center;">
+                        <video id="camera_feed" playsinline autoplay muted style="width:100%; height:100%; object-fit:cover;"></video>
+
+                        {{-- Frame Target Visual --}}
+                        <div style="position:absolute; inset:16px; border:2px dashed rgba(255,255,255,0.4); border-radius:10px; pointer-events:none; display:flex; align-items:flex-end; justify-content:center; padding:12px">
+                            <span style="background:rgba(0,0,0,0.6); color:#fff; font-size:12px; padding:4px 10px; border-radius:20px; backdrop-filter:blur(4px)">
+                                Arahkan kamera ke bahan makanan
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- Tombol Ambil Foto --}}
+                    <div x-show="!capturedImage">
+                        <button type="button" @click="capturePhoto()" class="btn btn-primary btn-block btn-lg flex-center gap-8">
                             <i data-lucide="camera"></i>
-                            <div class="strong text-sm" style="color:var(--ink)">Klik untuk Ambil Foto / Unggah File</div>
-                            <div class="text-xs">Mendukung file JPG, PNG, WEBP (Maksimal 10 MB)</div>
+                            <span>Ambil Foto Bahan</span>
+                        </button>
+                    </div>
+
+                    {{-- Preview Foto yang Baru Diambil (Freeze Frame) --}}
+                    <div x-show="capturedImage" class="stack-12">
+                        <div style="width:100%; border-radius:12px; overflow:hidden; border:2px solid var(--brand); aspect-ratio:4/3; background:#000;">
+                            <img :src="capturedImage" alt="Hasil Foto" style="width:100%; height:100%; object-fit:cover;">
                         </div>
 
-                        <div x-show="previewUrl">
-                            <div class="preview-frame">
-                                <img :src="previewUrl" alt="Preview Foto Kulkas">
+                        <div class="grid grid-2 gap-8">
+                            <button type="button" @click="retakePhoto()" :disabled="loading" class="btn btn-secondary flex-center gap-6">
+                                <i data-lucide="refresh-cw"></i>
+                                <span>Foto Ulang</span>
+                            </button>
+                            <button type="button" @click="analyzePhoto()" :disabled="loading" class="btn btn-primary flex-center gap-6">
+                                <span x-show="!loading" class="flex-center gap-6">
+                                    <i data-lucide="sparkles"></i>
+                                    <span>Pindai Foto AI</span>
+                                </span>
+                                <span x-show="loading" class="flex-center gap-6">
+                                    <span class="spinner"></span>
+                                    <span>Menganalisis...</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Mode 2: Unggah File / Sampel Foto --}}
+                <div x-show="activeTab === 'upload'" class="stack-16">
+                    <label for="camera_input" class="dropzone" style="display:block; cursor:pointer">
+                        <input type="file" id="camera_input" accept="image/*" @change="onFileChange($event)" class="hide">
+
+                        <div x-show="!previewUrl || capturedImage">
+                            <i data-lucide="upload-cloud" style="width:32px;height:32px;color:var(--brand)"></i>
+                            <div class="strong text-sm mt-8" style="color:var(--ink)">Pilih Foto dari Komputer / HP</div>
+                            <div class="text-xs text-muted">Format JPG, PNG, WEBP (Maksimal 10 MB)</div>
+                        </div>
+
+                        <div x-show="previewUrl && !capturedImage">
+                            <div class="preview-frame" style="max-height:220px">
+                                <img :src="previewUrl" alt="Foto Dipilih">
                             </div>
-                            <div class="text-xs mt-8">Ganti Foto</div>
+                            <div class="text-xs text-muted mt-8">Klik untuk ganti foto</div>
                         </div>
                     </label>
 
+                    {{-- Pilihan Contoh Sampel Cepat --}}
                     <div>
-                        <div class="eyebrow">Atau Pilih Sampel Demo Sidang:</div>
+                        <div class="eyebrow" style="margin-bottom:6px">Atau Uji Contoh Sampel:</div>
                         <div class="grid grid-3 gap-8">
                             <button type="button" @click="selectSample('fridge_1', 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=80')"
                                 class="card" :class="selectedSample === 'fridge_1' ? 'is-dashed' : ''"
-                                style="padding:8px;text-align:left;cursor:pointer">
-                                <div class="preview-frame mb-8">
-                                    <img src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=200&q=80" alt="Kulkas Sayur">
-                                </div>
-                                <span class="text-xs truncate">Kulkas Sayur</span>
+                                style="padding:6px; text-align:center; cursor:pointer">
+                                <span class="text-xs strong">Kulkas Sayur</span>
                             </button>
 
                             <button type="button" @click="selectSample('fridge_2', 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80')"
                                 class="card" :class="selectedSample === 'fridge_2' ? 'is-dashed' : ''"
-                                style="padding:8px;text-align:left;cursor:pointer">
-                                <div class="preview-frame mb-8">
-                                    <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=200&q=80" alt="Pasar Segar">
-                                </div>
-                                <span class="text-xs truncate">Pasar Segar</span>
+                                style="padding:6px; text-align:center; cursor:pointer">
+                                <span class="text-xs strong">Belanja Pasar</span>
                             </button>
 
                             <button type="button" @click="selectSample('fridge_3', 'https://images.unsplash.com/photo-1571171637578-41bc2dd41cd2?auto=format&fit=crop&w=800&q=80')"
                                 class="card" :class="selectedSample === 'fridge_3' ? 'is-dashed' : ''"
-                                style="padding:8px;text-align:left;cursor:pointer">
-                                <div class="preview-frame mb-8">
-                                    <img src="https://images.unsplash.com/photo-1571171637578-41bc2dd41cd2?auto=format&fit=crop&w=200&q=80" alt="Bumbu Dapur">
-                                </div>
-                                <span class="text-xs truncate">Bumbu Dapur</span>
+                                style="padding:6px; text-align:center; cursor:pointer">
+                                <span class="text-xs strong">Bumbu Dapur</span>
                             </button>
                         </div>
                     </div>
 
-                    <button type="button" @click="analyzePhoto()" :disabled="loading" class="btn btn-primary btn-lg btn-block">
-                        <template x-if="!loading">
-                            <span class="flex-center gap-8">
-                                <i data-lucide="sparkles"></i>
-                                <span>Pindai Bahan dengan Gemini Vision AI</span>
-                            </span>
-                        </template>
-                        <template x-if="loading">
-                            <span class="flex-center gap-8">
-                                <span class="spinner"></span>
-                                <span>Gemini Vision Sedang Menganalisis Objek...</span>
-                            </span>
-                        </template>
+                    <button type="button" @click="analyzePhoto()" :disabled="loading" class="btn btn-primary btn-block btn-lg">
+                        <span x-show="!loading" class="flex-center gap-8">
+                            <i data-lucide="sparkles"></i>
+                            <span>Pindai Foto dengan AI</span>
+                        </span>
+                        <span x-show="loading" class="flex-center gap-8">
+                            <span class="spinner"></span>
+                            <span>Memindai Objek Bahan...</span>
+                        </span>
                     </button>
-
-                    {{-- Catatan penyimpanan awan --}}
-                    <div class="alert alert-info">
-                        <i data-lucide="cloud"></i>
-                        <div class="body">
-                            <strong>Penyimpanan Foto:</strong>
-                            Supabase Cloud Storage Bucket
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- Panel hasil --}}
+        {{-- Panel Kanan: Hasil Deteksi Sederhana & Bersih --}}
         <div>
-            {{-- Belum ada analisis --}}
+            {{-- Kondisi 1: Belum Ada Analisis --}}
             <div x-show="!loading && detectedItems.length === 0" class="card">
-                <div class="empty">
-                    <i data-lucide="scan-line"></i>
-                    <h3>Hasil Deteksi Objek Akan Muncul Di Sini</h3>
-                    <p>Setelah Anda mengunggah atau memilih sampel foto kulkas lalu menekan tombol pemindaian, model Computer Vision Gemini akan menampilkan daftar bahan makanan beserta perkiraan takaran dan masa simpannya.</p>
+                <div class="empty" style="padding:40px 20px">
+                    <i data-lucide="scan-line" style="width:36px;height:36px;color:var(--brand)"></i>
+                    <h3>Hasil Deteksi Bahan Akan Tampil Di Sini</h3>
+                    <p class="text-muted" style="max-width:380px; margin:0 auto">
+                        Ambil foto bahan makanan dengan kamera atau unggah foto, lalu tekan tombol pindai untuk mengenali nama bahan secara otomatis.
+                    </p>
                 </div>
             </div>
 
-            {{-- Sedang memindai --}}
+            {{-- Kondisi 2: Sedang Memproses --}}
             <div x-show="loading" class="card">
-                <div class="card-body">
-                    <div class="stack-16 text-center">
-                        <div class="flex-center" style="justify-content:center">
-                            <i data-lucide="brain-circuit" style="width:28px;height:28px;color:var(--brand)"></i>
-                        </div>
-                        <div>
-                            <h3 class="mb-0">Gemini Vision AI Sedang Memindai Gambar</h3>
-                            <div class="text-sm text-muted mt-8">Mengklasifikasikan bahan pangan, memperkirakan takaran, dan menghitung estimasi masa simpan...</div>
-                        </div>
-                        <div class="stack-8" style="max-width:420px;margin:0 auto">
-                            <div class="skeleton" style="height:12px"></div>
-                            <div class="skeleton" style="height:12px"></div>
-                            <div class="skeleton" style="height:12px;max-width:70%"></div>
-                        </div>
-                    </div>
+                <div class="card-body" style="padding:48px 24px; text-align:center">
+                    <span class="spinner" style="width:36px;height:36px;margin:0 auto 16px"></span>
+                    <h3 class="mb-4">AI Sedang Mengenali Bahan Makanan...</h3>
+                    <p class="text-sm text-muted mb-0">Menganalisis jenis sayuran, bumbu, protein, dan menghitung masa simpannya.</p>
                 </div>
             </div>
 
-            {{-- Hasil deteksi --}}
+            {{-- Kondisi 3: Hasil Deteksi Tampil (Sederhana, Bersih, Format Baris Ringkas) --}}
             <div x-show="!loading && detectedItems.length > 0" class="card">
-                <div class="card-head" style="align-items:flex-start">
+                <div class="card-head flex-between" style="border-bottom:1px solid var(--border)">
                     <div>
-                        <div class="flex-center gap-8">
+                        <h3 class="mb-0 flex-center gap-8">
                             <span class="dot dot-ok"></span>
-                            <h3 class="mb-0">Hasil Deteksi Computer Vision</h3>
-                        </div>
-                        <div class="text-sm text-muted mt-8" x-text="summary"></div>
+                            <span>Bahan Berhasil Dikenali</span>
+                        </h3>
+                        <span class="hint text-xs text-muted" x-text="summary"></span>
                     </div>
-                    <div class="flex-center flex-wrap gap-8">
-                        <span class="chip mono" x-text="'Latensi: ' + latency + ' ms'"></span>
-                        <span class="chip chip-brand" x-text="detectedItems.length + ' Bahan Dikenali'"></span>
-                    </div>
+                    <span class="chip chip-brand mono strong" x-text="detectedItems.length + ' Item'"></span>
                 </div>
 
                 <form action="{{ route('vision.save-batch') }}" method="POST">
                     @csrf
 
-                    <div class="card-body" style="max-height:460px;overflow-y:auto">
-                        <div class="stack-12">
-                            <template x-for="(item, index) in detectedItems" :key="index">
-                                <div class="card">
-                                    <div class="card-body tight">
-                                        <div class="flex-between mb-12" style="align-items:flex-start">
-                                            <div class="flex-center gap-12">
-                                                <span class="chip chip-navy" x-text="index + 1"></span>
-                                                <div>
-                                                    <input type="text" :name="'items[' + index + '][item_name]'" x-model="item.item_name" required
-                                                        class="input" style="max-width:240px">
-                                                    <div class="flex-center flex-wrap gap-8 mt-8">
-                                                        <span class="chip chip-info" x-text="item.category"></span>
-                                                        <input type="hidden" :name="'items[' + index + '][category]'" :value="item.category">
-                                                        <span class="text-xs text-muted" x-text="'Lokasi: ' + (item.storage_location || 'Kulkas')"></span>
-                                                        <input type="hidden" :name="'items[' + index + '][storage_location]'" :value="item.storage_location || 'Kulkas (Chiller)'">
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {{-- Keyakinan deteksi --}}
-                                            <div class="text-right" style="min-width:140px">
-                                                <span class="chip chip-ok mono" x-text="Math.round((item.confidence_score || 0.95) * 100) + '% Akurat'"></span>
-                                                <div class="conf-bar mt-8">
-                                                    <span :style="'width: ' + Math.round((item.confidence_score || 0.95) * 100) + '%'"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {{-- Takaran, satuan & masa simpan --}}
-                                        <div class="grid grid-3 gap-12">
-                                            <div>
-                                                <label class="label">Jumlah</label>
+                    <div class="card-body flush" style="max-height:480px; overflow-y:auto">
+                        <table class="table" style="font-size:13px">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px">#</th>
+                                    <th>Nama Bahan Makanan</th>
+                                    <th style="width:110px">Kategori</th>
+                                    <th style="width:140px">Takaran</th>
+                                    <th style="width:100px">Masa Simpan</th>
+                                    <th style="width:40px; text-align:center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(item, index) in detectedItems" :key="index">
+                                    <tr>
+                                        <td>
+                                            <span style="font-size:18px" x-text="getIcon(item.item_name)"></span>
+                                        </td>
+                                        <td>
+                                            <input type="text" :name="'items[' + index + '][item_name]'" x-model="item.item_name" required
+                                                class="input" style="padding:6px 10px; font-weight:600">
+                                            <input type="hidden" :name="'items[' + index + '][storage_location]'" :value="item.storage_location || 'Kulkas (Chiller)'">
+                                            <input type="hidden" :name="'items[' + index + '][freshness_notes]'" :value="item.freshness_notes || 'Terdeteksi otomatis via Vision AI'">
+                                        </td>
+                                        <td>
+                                            <span class="chip chip-info text-xs" x-text="item.category"></span>
+                                            <input type="hidden" :name="'items[' + index + '][category]'" :value="item.category">
+                                        </td>
+                                        <td>
+                                            <div class="flex-center gap-4">
                                                 <input type="number" step="0.5" :name="'items[' + index + '][estimated_quantity]'" x-model="item.estimated_quantity" required
-                                                    class="input mono">
+                                                    class="input mono" style="padding:6px 8px; width:55px; text-align:center">
+                                                <input type="text" :name="'items[' + index + '][unit]'" x-model="item.unit" required
+                                                    class="input" style="padding:6px 8px; width:65px">
                                             </div>
-                                            <div>
-                                                <label class="label">Satuan</label>
-                                                <input type="text" :name="'items[' + index + '][unit]'" x-model="item.unit" required class="input">
-                                            </div>
-                                            <div>
-                                                <label class="label">Masa Simpan (Hari)</label>
-                                                <input type="number" :name="'items[' + index + '][typical_shelf_life_days]'" x-model="item.typical_shelf_life_days" required
-                                                    class="input mono">
-                                            </div>
-                                        </div>
-
-                                        <input type="hidden" :name="'items[' + index + '][freshness_notes]'" :value="item.freshness_notes || 'Terdeteksi otomatis via Vision AI'">
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
+                                        </td>
+                                        <td>
+                                            <span class="chip text-xs mono" x-text="item.typical_shelf_life_days + ' hari'"></span>
+                                            <input type="hidden" :name="'items[' + index + '][typical_shelf_life_days]'" :value="item.typical_shelf_life_days">
+                                        </td>
+                                        <td style="text-align:center">
+                                            <button type="button" @click="removeItem(index)" class="btn btn-ghost btn-sm" style="padding:4px 6px; color:var(--danger)" title="Hapus bahan ini">
+                                                <i data-lucide="x" style="width:14px;height:14px"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div class="card-foot">
-                        <div class="flex-between">
-                            <button type="button" @click="detectedItems = []" class="btn btn-ghost btn-sm">Bersihkan Hasil</button>
-                            <button type="submit" class="btn btn-primary">
-                                <i data-lucide="check-check"></i>
-                                <span>Simpan Semua Bahan ke Inventaris Dapur</span>
-                            </button>
-                        </div>
+                    <div class="card-foot flex-between">
+                        <button type="button" @click="detectedItems = []" class="btn btn-ghost btn-sm text-muted">
+                            Bersihkan Hasil
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="check-check"></i>
+                            <span>Simpan Semua ke Inventaris</span>
+                        </button>
                     </div>
                 </form>
             </div>

@@ -41,12 +41,12 @@ class DashboardController extends Controller
         $stats = $this->inventoryService->getDashboardStats($user->id);
         $expiringItems = $this->inventoryService->getExpiringSoonItems($user->id);
 
-        // Resep rekomendasi terbaru
+        // Resep rekomendasi terbaru (3 resep pilihan agar dashboard ringkas & tidak menumpuk)
         $recentRecipes = RecipeCache::where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)->orWhereNull('user_id');
             })
             ->latest()
-            ->take(6)
+            ->take(3)
             ->get();
 
         // Riwayat AI Log terbaru

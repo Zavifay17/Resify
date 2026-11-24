@@ -146,18 +146,14 @@
     <div class="page-head">
         <div class="page-head-row">
             <div class="page-head-main">
-                <div class="page-head-meta">
-                    <span class="eyebrow"><i data-lucide="sparkles"></i> Peracik Resep Otomatis</span>
-                    <span class="chip chip-brand">Gemini Flash + Engine Cadangan Lokal</span>
-                </div>
+                <span class="eyebrow"><i data-lucide="sparkles"></i> Peracik Resep AI</span>
                 <h1>Generator Resep Berbasis Bahan Sisa</h1>
-                <p class="sub">Pilih bahan yang tersedia di kulkas Anda, lalu biarkan AI meracik hidangan lezat dan mengestimasi nilai gizinya secara otomatis.</p>
+                <p class="sub">Pilih bahan yang tersedia di kulkas Anda, lalu AI akan menyusun resep masakan lezat dan estimasi gizinya secara instan.</p>
             </div>
 
             <div class="page-head-actions">
                 <a href="{{ route('recipes.index') }}" class="btn btn-secondary">
-                    <i data-lucide="book-open"></i>
-                    Katalog Kuliner Nusantara
+                    <i data-lucide="book-open"></i> Katalog Kuliner
                 </a>
             </div>
         </div>
@@ -328,14 +324,14 @@
                         <p class="text-sm text-muted mb-0" x-text="generatedRecipe?.description"></p>
                     </div>
 
-                    <!-- Cache Level Indicator + Key Metrics -->
+                    <!-- Info Saji & Key Metrics -->
                     <div class="stack-12">
-                        <div class="alert alert-info" style="align-items:center">
-                            <i data-lucide="zap" style="color:var(--brand)"></i>
-                            <div class="body">
-                                <strong x-text="cacheInfo?.cache_level"></strong>
-                                <span class="text-xs text-muted mono" x-text="'Latensi: ' + cacheInfo?.latency + ' ms'"></span>
-                            </div>
+                        <div class="flex-between" style="padding:6px 12px; background:var(--bg-subtle); border-radius:8px; border:1px solid var(--border)">
+                            <span class="flex-center gap-6 text-xs text-muted">
+                                <i data-lucide="sparkles" style="width:13px;height:13px;color:var(--brand)"></i>
+                                <span>Resep Masakan Berhasil Diracik</span>
+                            </span>
+                            <span class="text-xs text-muted mono" x-text="cacheInfo?.latency + ' ms'"></span>
                         </div>
 
                         <div class="grid grid-2 gap-12">
