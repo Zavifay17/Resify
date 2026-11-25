@@ -82,10 +82,52 @@ class AuthController extends Controller
      */
     private function muatKredensialGoogle(): void
     {
+        $idLokal = (string) config('services.google.client_id', '');
+        $secretLokal = (string) config('services.google.client_secret', '');
+        $idDatabase = trim((string) SystemSetting::get('google_client_id', ''));
+        $secretDatabase = trim((string) SystemSetting::get('google_client_secret', ''));
+
+        // Nilai database dipakai hanya kalau bentuknya memang kredensial OAuth Google.
+        // Selain itu (mis. kolom Client ID terisi alamat email) sistem kembali ke .env
+        // supaya tombol Google tidak mengirim client_id yang ditolak Google.
         config([
-            'services.google.client_id' => SystemSetting::get('google_client_id', config('services.google.client_id')),
-            'services.google.client_secret' => SystemSetting::get('google_client_secret', config('services.google.client_secret')),
+            'services.google.client_id' => self::kredensialGoogleSah('id', $idDatabase) ? $idDatabase : $idLokal,
+            'services.google.client_secret' => self::kredensialGoogleSah('secret', $secretDatabase) ? $secretDatabase : $secretLokal,
         ]);
+    }
+
+    /**
+     * Bentuk baku kredensial OAuth client tipe Web application.
+     */
+    public static function kredensialGoogleSah(string $jenis, string $nilai): bool
+    {
+        $nilai = trim($nilai);
+
+        if ($nilai === '' || strlen($nilai) > 200 || preg_match('/\s/', $nilai)) {
+            return false;
+        }
+
+        return $jenis === 'id'
+            ? preg_match('/^\d{6,20}-[a-z0-9]{10,60}\.apps\.googleusercontent\.com$/', $nilai) === 1
+            : preg_match('/^GOCSPX-[A-Za-z0-9_\-]{16,80}$/', $nilai) === 1;
+    }
+
+    /**
+     * Kredensial di database yang perlu diperbaiki (dipakai halaman Pengaturan).
+     */
+    public function kredensialGooglePerluDiperbaiki(): array
+    {
+        $lengkap = [];
+
+        foreach (['google_client_id' => 'id', 'google_client_secret' => 'secret'] as $key => $jenis) {
+            $nilai = trim((string) SystemSetting::get($key, ''));
+
+            if ($nilai !== '' && !self::kredensialGoogleSah($jenis, $nilai)) {
+                $lengkap[] = $key === 'google_client_id' ? 'OAuth Client ID' : 'OAuth Client Secret';
+            }
+        }
+
+        return $lengkap;
     }
 
     /**
@@ -121,8 +163,10 @@ class AuthController extends Controller
         }
 
         if (str_contains($pesan, 'invalid_client') || str_contains($pesan, 'unauthorized_client')) {
-            return 'Client ID atau Client Secret tidak dikenali. Tempel ulang keduanya pada Pengaturan > Login Google, '
-                . 'pastikan berasal dari client tipe Web application di project yang sama.';
+            return 'Google tidak mengenali Client ID yang dipakai. Client ID OAuth selalu berbentuk '
+                . 'angka-karakter.apps.googleusercontent.com (bukan alamat email) dan Client Secret selalu diawali GOCSPX-. '
+                . 'Tempel ulang keduanya pada Pengaturan > Login Google, pastikan berasal dari client tipe Web application di project yang sama.'
+                . (str_contains($pesan, 'project id') ? ' Google juga menandai client ini tidak tertaut ke project, jadi buat client baru di project yang sama lalu tempel kredensialnya ulang.' : '');
         }
 
         if (str_contains($pesan, 'access_denied') || str_contains($pesan, 'invalid_grant') || str_contains($pesan, 'consent')) {

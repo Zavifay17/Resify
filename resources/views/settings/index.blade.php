@@ -430,6 +430,17 @@
             </div>
 
             <div class="card-body">
+                @if ($googlePerluDiperbaiki !== [])
+                    <div class="alert alert-warn">
+                        <i data-lucide="alert-triangle"></i>
+                        <div class="text-sm">
+                            Nilai tersimpan di database belum berbentuk kredensial Google untuk
+                            <span class="strong">{{ implode(' dan ', $googlePerluDiperbaiki) }}</span>, jadi sistem memakai nilai dari
+                            <span class="mono">.env</span> agar tombol Google tetap bisa dipakai.
+                            Tempel ulang dari Google Cloud &gt; Google Auth Platform &gt; Clients, lalu simpan.
+                        </div>
+                    </div>
+                @endif
                 <div class="grid grid-2">
                     <div class="field">
                         <label class="label" for="setting_google_id">OAuth Client ID</label>

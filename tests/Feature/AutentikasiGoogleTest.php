@@ -110,18 +110,70 @@ class AutentikasiGoogleTest extends TestCase
 
         $this->actingAs(User::firstOrFail())->post(route('settings.update'), [
             'gemini_model' => 'gemini-3.5-flash',
-            'google_client_id' => 'klien-pengaturan.apps.googleusercontent.com',
-            'google_client_secret' => 'rahasia-pengaturan',
+            'google_client_id' => '123456789012-abcdefghijklmnopqrstuvwx12.apps.googleusercontent.com',
+            'google_client_secret' => 'GOCSPX-ujiPengaturan1234567890abcdef',
         ])->assertRedirect(route('settings.index'));
 
-        $this->assertSame('klien-pengaturan.apps.googleusercontent.com', SystemSetting::get('google_client_id'));
+        $this->assertSame('123456789012-abcdefghijklmnopqrstuvwx12.apps.googleusercontent.com', SystemSetting::get('google_client_id'));
 
         // tanpa menyentuh .env, tombol Google sudah muncul dan redirect memakai klien ini
         $this->post(route('logout'));
 
         $this->get(route('login'))->assertOk()->assertSee('btn-google-oauth', false);
         $this->get(route('google.redirect'))
-            ->assertRedirectContains('client_id=klien-pengaturan.apps.googleusercontent.com');
+            ->assertRedirectContains('client_id=123456789012-abcdefghijklmnopqrstuvwx12.apps.googleusercontent.com');
+    }
+
+    public function test_email_di_kolom_client_id_ditolak_pengaturan(): void
+    {
+        $this->isiKredensialGoogle();
+
+        $this->actingAs(User::firstOrFail())->post(route('settings.update'), [
+            'gemini_model' => 'gemini-3.5-flash',
+            'google_client_id' => 'pahlevyreza86@gmail.com',
+            'google_client_secret' => 'rahasia saya',
+        ])->assertSessionHasErrors(['google_client_id', 'google_client_secret']);
+
+        $this->assertNull(SystemSetting::where('key', 'google_client_id')->value('value'));
+    }
+
+    public function test_kredensial_google_salah_format_diabaikan_demi_nilai_env(): void
+    {
+        $this->isiKredensialGoogle();
+
+        SystemSetting::set('google_client_id', 'pahlevyreza86@gmail.com', 'Google OAuth Client ID');
+        SystemSetting::set('google_client_secret', 'kata sandi', 'Google OAuth Client Secret');
+
+        app(\App\Http\Controllers\AuthController::class)->googleSiap();
+
+        $this->assertSame('uji-uji-uji.apps.googleusercontent.com', config('services.google.client_id'));
+        $this->assertSame('rahasia-uji', config('services.google.client_secret'));
+
+        $this->get(route('google.redirect'))->assertRedirectContains('client_id=uji-uji-uji.apps.googleusercontent.com');
+    }
+
+    public function test_halaman_pengaturan_tampilkan_peringatan_kredensial_google_salah(): void
+    {
+        $this->isiKredensialGoogle();
+
+        SystemSetting::set('google_client_id', 'pahlevyreza86@gmail.com', 'Google OAuth Client ID');
+
+        $this->actingAs(User::firstOrFail())
+            ->get(route('settings.index'))
+            ->assertOk()
+            ->assertSee('belum berbentuk kredensial Google', false)
+            ->assertDontSee('pahlevyreza86@gmail.com', false);
+    }
+
+    public function test_pesan_galat_invalid_client_menyebut_bentuk_client_id(): void
+    {
+        $this->isiKredensialGoogle();
+
+        Socialite::shouldReceive('driver->scopes->redirectUrl->user')
+            ->andThrow(new \RuntimeException('Client missing a project id. Error 401: invalid_client'));
+
+        $this->get(route('google.callback'))->assertRedirect(route('login'));
+        $this->assertStringContainsString('apps.googleusercontent.com', (string) session('error'));
     }
 
     public function test_alur_google_tidak_error_saat_belum_dikonfigurasi(): void

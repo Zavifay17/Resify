@@ -44,6 +44,7 @@ class SettingController extends Controller
         $authGoogle = app(AuthController::class);
         $googleSiap = $authGoogle->googleSiap();
         $googleCallback = (string) (config('services.google.redirect') ?: url('/auth/google/callback'));
+        $googlePerluDiperbaiki = $authGoogle->kredensialGooglePerluDiperbaiki();
 
         return view('settings.index', compact(
             'user',
@@ -58,7 +59,8 @@ class SettingController extends Controller
             'studentName',
             'perluToken',
             'googleSiap',
-            'googleCallback'
+            'googleCallback',
+            'googlePerluDiperbaiki'
         ));
     }
 
@@ -70,11 +72,13 @@ class SettingController extends Controller
             'supabase_url' => 'nullable|string',
             'supabase_key' => 'nullable|string',
             'supabase_bucket' => 'nullable|string',
-            'google_client_id' => 'nullable|string',
-            'google_client_secret' => 'nullable|string',
+            'google_client_id' => ['nullable', 'string', 'max:200', 'regex:/^\d{6,20}-[a-z0-9]{10,60}\.apps\.googleusercontent\.com$/'],
+            'google_client_secret' => ['nullable', 'string', 'max:200', 'regex:/^GOCSPX-[A-Za-z0-9_\-]{16,80}$/'],
         ], [
             'gemini_api_key.min' => 'Gemini API Key terlalu pendek. Salin kunci utuh dari Google AI Studio (minimal 30 karakter, tanpa spasi).',
             'gemini_api_key.regex' => 'Gemini API Key hanya boleh berisi huruf, angka, tanda hubung, garis bawah, dan titik. Jangan menuliskan nama atau kata sandi di kolom ini.',
+            'google_client_id.regex' => 'OAuth Client ID Google berbentuk angka-karakter.apps.googleusercontent.com, bukan alamat email. Salin Client ID di Google Cloud > Google Auth Platform > Clients.',
+            'google_client_secret.regex' => 'OAuth Client Secret Google selalu diawali GOCSPX- dan tanpa spasi. Salin secret dari client yang sama dengan Client ID di atas.',
         ]);
 
         if (isset($validated['gemini_api_key'])) {
