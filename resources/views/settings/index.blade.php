@@ -48,7 +48,7 @@
     },
 
     testGemini() {
-        const key = document.getElementById('setting_gemini_key').value;
+        const keyBaru = document.getElementById('setting_gemini_key').value.trim();
         const model = document.getElementById('setting_gemini_model').value;
 
         this.testingGemini = true;
@@ -60,7 +60,7 @@
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
             },
-            body: JSON.stringify({ api_key: key, model: model })
+            body: JSON.stringify({ api_key: keyBaru.length >= 30 ? keyBaru : null, model: model })
         })
         .then(res => res.json())
         .then(res => {
@@ -171,7 +171,9 @@
             <div class="card-body tight col gap-8">
                 <div class="flex-between">
                     <span class="text-sm">Gemini API</span>
-                    @if ($geminiApiKey)
+                    @if ($geminiKeyDatabaseSalah)
+                        <span class="chip chip-warn"><span class="dot dot-warn"></span> Kunci di database tidak valid</span>
+                    @elseif ($geminiApiKey)
                         <span class="chip chip-ok"><span class="dot dot-ok"></span> Terhubung</span>
                     @else
                         <span class="chip chip-warn"><span class="dot dot-warn"></span> Belum dikonfigurasi</span>
@@ -326,12 +328,22 @@
                     <div class="field">
                         <label class="label" for="setting_gemini_key">Gemini API Key</label>
                         <input class="input mono" type="password" id="setting_gemini_key" name="gemini_api_key"
-                               value="" autocomplete="off" placeholder="AIzaSy...">
+                               value="" autocomplete="new-password" placeholder="AIzaSy... atau AQ...">
                         <div class="hint">
                             Disimpan pada tabel <span class="mono">system_settings</span>; bila dikosongkan, sistem mengambil
                             <span class="mono">GEMINI_API_KEY</span> dari file .env.
                             Kosongkan bila kunci tidak diganti.
                         </div>
+                        @if ($geminiKeyDatabaseSalah)
+                            <div class="alert alert-warn">
+                                <i data-lucide="alert-triangle"></i>
+                                <div class="text-sm">
+                                    Nilai <span class="mono">gemini_api_key</span> di database bukan bentuk API key Google, jadi sistem
+                                    memakai kunci dari <span class="mono">.env</span> agar AI tetap jalan.
+                                    Tempel kunci utuh dari Google AI Studio di kolom atas lalu simpan untuk menggantinya.
+                                </div>
+                            </div>
+                        @endif
                         @error('gemini_api_key')
                             <div class="err">{{ $message }}</div>
                         @enderror

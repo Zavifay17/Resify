@@ -23,7 +23,9 @@ class SettingController extends Controller
     {
         $user = Auth::user();
 
-        $geminiApiKey = SystemSetting::get('gemini_api_key', env('GEMINI_API_KEY', ''));
+        $geminiApiKey = $this->geminiService->keyTerpakai();
+        $geminiKeyDatabaseSalah = $this->geminiService->keyDatabase() === ''
+            && trim((string) SystemSetting::get('gemini_api_key', '')) !== '';
         $geminiModel = SystemSetting::get('gemini_model', env('GEMINI_MODEL', 'gemini-3-flash-preview'));
 
         $supabaseUrl = SystemSetting::get('supabase_url', env('SUPABASE_URL', ''));
@@ -46,6 +48,7 @@ class SettingController extends Controller
         return view('settings.index', compact(
             'user',
             'geminiApiKey',
+            'geminiKeyDatabaseSalah',
             'geminiModel',
             'supabaseUrl',
             'supabaseKey',
@@ -62,13 +65,16 @@ class SettingController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'gemini_api_key' => 'nullable|string',
+            'gemini_api_key' => ['nullable', 'string', 'min:30', 'max:255', 'regex:/^[A-Za-z0-9_\-\.]+$/'],
             'gemini_model' => 'required|string',
             'supabase_url' => 'nullable|string',
             'supabase_key' => 'nullable|string',
             'supabase_bucket' => 'nullable|string',
             'google_client_id' => 'nullable|string',
             'google_client_secret' => 'nullable|string',
+        ], [
+            'gemini_api_key.min' => 'Gemini API Key terlalu pendek. Salin kunci utuh dari Google AI Studio (minimal 30 karakter, tanpa spasi).',
+            'gemini_api_key.regex' => 'Gemini API Key hanya boleh berisi huruf, angka, tanda hubung, garis bawah, dan titik. Jangan menuliskan nama atau kata sandi di kolom ini.',
         ]);
 
         if (isset($validated['gemini_api_key'])) {

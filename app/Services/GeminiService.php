@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * Service Pattern: GeminiService
  * Menangani integrasi Google Gemini AI API (Text Reasoning, Vision API, Token Monitoring)
- * Sesuai Standar Rekayasa Perangkat Lunak (RPL) Universitas BSI
+ * Sesuai Standar Rekayasa Perangkat Lunak (RPL)
  */
 class GeminiService
 {
@@ -20,8 +20,35 @@ class GeminiService
 
     public function __construct()
     {
-        $this->apiKey = SystemSetting::get('gemini_api_key', config('services.gemini.api_key', env('GEMINI_API_KEY', '')));
+        $this->apiKey = $this->keyTerpakai();
         $this->model = SystemSetting::get('gemini_model', config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3-flash-preview')));
+    }
+
+    /**
+     * Kunci dari database dipakai hanya kalau bentuknya benar-benar API key.
+     * Nilai lain (mis. nama atau kata sandi yang tak sengaja tersimpan) otomatis
+     * jatuh kembali ke GEMINI_API_KEY di .env supaya AI tetap jalan.
+     */
+    public function keyTerpakai(): string
+    {
+        $kunciLokal = (string) config('services.gemini.api_key', env('GEMINI_API_KEY', ''));
+        $kunciDatabase = $this->keyDatabase();
+
+        return $kunciDatabase !== '' ? $kunciDatabase : $kunciLokal;
+    }
+
+    public function keyDatabase(): string
+    {
+        $kunci = (string) SystemSetting::get('gemini_api_key', '');
+
+        return self::keySah($kunci) ? $kunci : '';
+    }
+
+    public static function keySah(string $key): bool
+    {
+        $key = trim($key);
+
+        return $key !== '' && strlen($key) >= 30 && preg_match('/^[A-Za-z0-9_\-\.]+$/', $key) === 1;
     }
 
     public function getApiKey(): string
@@ -39,12 +66,19 @@ class GeminiService
      */
     public function testConnection(?string $apiKey = null, ?string $model = null): array
     {
-        $key = $apiKey ?: $this->apiKey;
+        $key = trim((string) $apiKey) !== '' ? trim((string) $apiKey) : $this->apiKey;
 
-        if (empty($key)) {
+        if ($key === '') {
             return [
                 'success' => false,
                 'message' => 'API Key Gemini belum diset. Silakan masukkan API Key Gemini Anda.'
+            ];
+        }
+
+        if (!self::keySah($key)) {
+            return [
+                'success' => false,
+                'message' => 'Format API Key Gemini tidak sesuai. Kunci Google berisi minimal 30 karakter tanpa spasi (contoh diawali AIza... atau AQ...), bukan nama atau kata sandi.'
             ];
         }
 
@@ -61,14 +95,14 @@ class GeminiService
             ],
             'generationConfig' => [
                 'temperature' => 0.5,
-                'maxOutputTokens' => 100,
+                'maxOutputTokens' => 1024,
             ]
         ];
 
         // Model yang dipilih dicoba pertama. Jika model itu lambat/503/timeout, sistem otomatis mencoba model cadangan yang aktif
         $modelUtama = $model ?: $this->model;
         $rantai = array_values(array_unique(array_filter(array_merge([$modelUtama], $this->rantaiModel()))));
-        $hasil = $this->kirimKeGemini($payload, 15, $rantai, $key);
+        $hasil = $this->kirimKeGemini($payload, 30, $rantai, $key);
         $executionTime = (int) round((microtime(true) - $startTime) * 1000);
 
         if (isset($hasil['text'])) {
@@ -88,12 +122,11 @@ class GeminiService
                 $hasil['text']
             );
 
-            // Perbarui setting model bila berhasil terhubung
-            SystemSetting::set('gemini_model', $hasil['model'], 'Model Gemini Aktif Terverifikasi');
-
+            // Pilihan model pengguna tidak ditimpa: saat model utama padat, rantai
+            // cadangan sudah ikut dicoba di permintaan berikutnya.
             $pesan = 'Koneksi API Gemini Berhasil Terhubung!';
-            if ($model && $hasil['model'] !== $model) {
-                $pesan .= " (Model {$model} sedang mengalami lonjakan di Google, dialihkan otomatis ke {$hasil['model']})";
+            if ($hasil['model'] !== $modelUtama) {
+                $pesan .= " (Model {$modelUtama} sedang padat di Google, pertanyaan ini dijawab oleh {$hasil['model']})";
             }
 
             return [
@@ -456,7 +489,7 @@ PROMPT;
     public function suggestSubstitute(string $ingredientName, string $recipeContext = ''): array
     {
         $prompt = <<<PROMPT
-Anda adalah Asisten Kuliner Cerdas AI pada Resepify (Universitas BSI).
+Anda adalah Asisten Kuliner Cerdas AI pada Resepify.
 Pengguna sedang kekurangan bahan: "{$ingredientName}".
 Konteks masakan: "{$recipeContext}".
 
