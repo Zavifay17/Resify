@@ -25,6 +25,17 @@ class HidanganFotoService
         'asap', 'sutra', 'bening', 'kuah', 'sederhana', 'kecap', 'oriental',
     ];
 
+    /**
+     * Kata tugas. Pendek dan tidak menyebut hidangannya, jadi tidak boleh
+     * ikut dinilai, tetapi kata dua huruf yang memang nama cara penyajian
+     * seperti "es" harus tetap lolos dari pemangkasan panjang kata.
+     */
+    private const KATA_HENTI = [
+        'di', 'ke', 'dari', 'pada', 'untuk', 'yang', 'akan', 'adalah', 'ini', 'itu',
+        'saja', 'juga', 'lagi', 'sama', 'atau', 'maupun', 'serta', 'para', 'si', 'se',
+        'in', 'on', 'at', 'an', 'to', 'a', 'i',
+    ];
+
     /** Hasil Commons yang bukan foto masakan. */
     private const KATA_TOLAK = [
         'bumbu', 'resep', 'logo', 'ikon', 'icon', 'peta', 'map', 'diagram', 'chart',
@@ -120,6 +131,8 @@ class HidanganFotoService
         'wedang' => ['vegetables', 'vegetable', 'noodles', 'rice', 'cake'],
         'bubur' => ['vegetables', 'vegetable', 'noodles', 'cake'],
         'kopi' => ['vegetables', 'vegetable', 'noodles', 'rice'],
+        'rujuk' => ['cake', 'kue', 'bolu', 'bread', 'pudding', 'puding', 'sop', 'sup', 'soup'],
+        'rujak' => ['cake', 'kue', 'bolu', 'bread', 'pudding', 'puding', 'sop', 'sup', 'soup'],
     ];
 
     /**
@@ -360,7 +373,7 @@ class HidanganFotoService
                     }
                 }
 
-                $nilai = ($skor === 3 ? 100 : 0) + $cocok;
+                $nilai = ($skor === 3 ? 100 : 0) + $cocok + $this->bonus($frasa, $asal, $judul);
 
                 if ($nilai > $nilaiTerbaik) {
                     $nilaiTerbaik = $nilai;
@@ -417,7 +430,9 @@ class HidanganFotoService
 
         $berbobot = fn(array $daftar, int $bobot) => collect($daftar)
             ->flatMap(fn($frasa) => explode(' ', (string) $frasa))
-            ->reject(fn($k) => strlen($k) < 3 || in_array($k, self::KATA_LOKOMOTIF, true))
+            ->reject(fn($k) => strlen($k) < 2
+                || in_array($k, self::KATA_HENTI, true)
+                || in_array($k, self::KATA_LOKOMOTIF, true))
             ->mapWithKeys(fn($k) => [$k => $bobot]);
 
         return $berbobot($kata->all(), 2)
@@ -637,7 +652,8 @@ class HidanganFotoService
                 $kata = trim($kata);
 
                 return $kata === ''
-                    || strlen($kata) < 3
+                    || strlen($kata) < 2
+                    || in_array($kata, self::KATA_HENTI, true)
                     || in_array($kata, self::KATA_SAMPING, true);
             })
             ->unique()
@@ -702,6 +718,20 @@ class HidanganFotoService
         }
 
         return $kenaIsi >= 2 ? 2 : 0;
+    }
+
+    /**
+     * Kata pertama judul adalah nama hidangannya, jadi foto yang menyebut kata
+     * itu lebih dipercaya daripada foto bahan yang cuma kebetulan cocok banyak kata:
+     * "Combro" mengalahkan "Oncom merah".
+     */
+    private function bonus(string $frasa, string $asal, string $judul): int
+    {
+        if ($asal !== 'judul' || str_word_count($frasa) !== 1) {
+            return 0;
+        }
+
+        return $frasa === $this->tokens($judul)->first() ? 3 : 0;
     }
 
     /**

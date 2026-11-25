@@ -66,6 +66,36 @@ class FotoHidanganResepTest extends TestCase
         ]);
     }
 
+    /**
+     * Tiap frasa pencarian diberi hasil berbeda, seperti Commons sebenarnya.
+     *
+     * @param  array<string,string>  $perFrasa  frasa pencarian => nama berkas
+     */
+    private function hasilCommonsPerFrasa(array $perFrasa): void
+    {
+        Http::fake([
+            'commons.wikimedia.org/*' => function ($request) use ($perFrasa) {
+                $frasa = (string) data_get($request->data(), 'gsrsearch', '');
+                $berkas = $perFrasa[$frasa] ?? null;
+
+                if ($berkas === null) {
+                    return Http::response(['query' => ['pages' => []]], 200);
+                }
+
+                $nama = 'https://upload.wikimedia.org/wikipedia/commons/1/11/' . str_replace(' ', '_', $berkas);
+
+                return Http::response([
+                    'query' => ['pages' => [
+                        '123' => [
+                            'title' => 'File:' . $berkas,
+                            'imageinfo' => [['mime' => 'image/jpeg', 'thumburl' => $nama, 'url' => $nama]],
+                        ],
+                    ]],
+                ], 200);
+            },
+        ]);
+    }
+
     public function test_foto_dipakai_saat_nama_berkas_memuat_frasa_hidangannya(): void
     {
         $this->hasilCommons('Stir fried mixed vegetables.jpg');
@@ -88,6 +118,65 @@ class FotoHidanganResepTest extends TestCase
 
         $this->assertSame(self::FOTO, $url);
         $this->assertStringContainsString('mixed', $url);
+    }
+
+    public function test_kata_es_tetap_menyebut_hidangannya(): void
+    {
+        $this->hasilCommons('Es Campur Banjar.jpg', 'image/jpeg', 'https://upload.wikimedia.org/wikipedia/commons/d/d8/Es_Campur.jpg');
+
+        // "es" cuma dua huruf tetapi nama hidangan, jadi jangan dibuang sebagai noise.
+        $this->assertSame(
+            'https://upload.wikimedia.org/wikipedia/commons/d/d8/Es_Campur.jpg',
+            app(HidanganFotoService::class)->cari('Es Campur', null, [], 8)
+        );
+    }
+
+    public function test_foto_hidangan_lain_tetap_ditolak_oleh_judul_berkata_es(): void
+    {
+        $this->hasilCommons(
+            'Deep fried potato wedges with cheese.jpg',
+            'image/jpeg',
+            'https://upload.wikimedia.org/wikipedia/commons/1/11/Deep_fried_potato_wedges.jpg'
+        );
+
+        // Es campur tidak boleh difoto kentang goreng.
+        $this->assertNull(app(HidanganFotoService::class)->cari('Es Campur', null, [], 8));
+    }
+
+    public function test_nama_hidangan_di_awal_judul_menangi_cocokan_bahan(): void
+    {
+        $this->hasilCommonsPerFrasa([
+            'combro' => 'Combro 2.jpg',
+            'oncom' => 'Oncom merah.JPG',
+        ]);
+
+        // Combro difoto oncom merah juga, tetapi nama hidangannya yang menang.
+        $url = app(HidanganFotoService::class)->cari(
+            'Combro Oncom Di Jero',
+            null,
+            ['Oncom merah', 'Kentang parut'],
+            12
+        );
+
+        $this->assertStringContainsString('Combro_2.jpg', (string) $url);
+    }
+
+    public function test_foto_kue_ditolak_untuk_resep_rujak(): void
+    {
+        $this->hasilCommonsPerFrasa([
+            'gula merah' => 'Kue Jongkong (Gula Merah).jpg',
+            'rujak' => 'Rujak Ambon.jpg',
+        ]);
+
+        // Rujak Natsepa memakai gula merah, tapi fotonya bukan kue jongkong.
+        $url = app(HidanganFotoService::class)->cari(
+            'Rujak Natsepa di Pantai Hitu',
+            'Maluku',
+            ['Gula merah', 'Cabai rawit'],
+            12
+        );
+
+        $this->assertStringContainsString('Rujak_Ambon.jpg', (string) $url);
     }
 
     public function test_foto_bukan_hidangan_ditolak(): void
