@@ -309,9 +309,17 @@
 
             <div class="modal-body">
                 <!-- Jawaban AI masih dimuat -->
-                <div x-show="substituteLoading" class="empty">
-                    <span class="spinner" style="display:block;margin:0 auto 12px;border-color:var(--line-strong);border-top-color:var(--brand)"></span>
-                    <p>Gemini AI sedang menalar alternatif bahan pengganti dan penyesuaian takarannya...</p>
+                <div x-show="substituteLoading">
+                    @include('partials.ai-wait', [
+                        'ringkas' => true,
+                        'judul' => 'Gemini AI Menalar Bahan Pengganti',
+                        'langkah' => [
+                            'Mengurai sifat bahan yang hilang',
+                            'Memilih alternatif paling mirip',
+                            'Menyesuaikan takarannya',
+                        ],
+                        'catatan' => 'Rasio dan catatan rasa dihitung dari karakter bahan, bukan tebakan umum.',
+                    ])
                 </div>
 
                 <!-- Daftar bahan pengganti -->

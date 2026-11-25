@@ -352,7 +352,7 @@
                                     <span>Pindai Foto AI</span>
                                 </span>
                                 <span x-show="loading" class="flex-center gap-6">
-                                    <span class="spinner"></span>
+                                    <span class="ai-titik"><i></i><i></i><i></i></span>
                                     <span>Menganalisis...</span>
                                 </span>
                             </button>
@@ -400,7 +400,7 @@
                             <span>Pindai Foto dengan AI</span>
                         </span>
                         <span x-show="loading" class="flex-center gap-8">
-                            <span class="spinner"></span>
+                            <span class="ai-titik"><i></i><i></i><i></i></span>
                             <span>Memindai Objek Bahan...</span>
                         </span>
                     </button>
@@ -423,11 +423,16 @@
 
             {{-- Kondisi 2: Sedang Memproses --}}
             <div x-show="loading" class="card">
-                <div class="card-body" style="padding:48px 24px; text-align:center">
-                    <span class="spinner" style="width:36px;height:36px;margin:0 auto 16px"></span>
-                    <h3 class="mb-4">AI Sedang Mengenali Bahan Makanan...</h3>
-                    <p class="text-sm text-muted mb-0">Menganalisis jenis sayuran, bumbu, protein, dan menghitung masa simpannya.</p>
-                </div>
+                @include('partials.ai-wait', [
+                    'judul' => 'AI Sedang Mengenali Bahan Makanan',
+                    'langkah' => [
+                        'Membaca foto ke dalam memori aman',
+                        'Memindai isi kulkas per rak',
+                        'Mengenal bumbu sachet & kemasan',
+                        'Menaksir jumlah dan masa simpan',
+                    ],
+                    'catatan' => 'Gemini AI mencocokkan warna, tekstur, dan bentuk tiap bahan sebelum menghitung estimasinya.',
+                ])
             </div>
 
             {{-- Kondisi 3: Hasil Deteksi Tampil (Sederhana, Bersih, Format Baris Ringkas) --}}

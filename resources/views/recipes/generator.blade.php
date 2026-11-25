@@ -297,13 +297,34 @@
                         </template>
                         <template x-if="loading">
                             <span class="flex-center" style="justify-content:center">
-                                <span class="spinner"></span>
+                                <span class="ai-titik"><i></i><i></i><i></i></span>
                                 <span>Gemini AI Sedang Meracik Resep &amp; Mengestimasi Nutrisi...</span>
                             </span>
                         </template>
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Step 2b: Panel saat Gemini AI sedang meracik -->
+    <div x-show="loading" x-cloak class="card" style="margin-top:18px">
+        @include('partials.ai-wait', [
+            'judul' => 'Gemini AI Sedang Meracik Resepmu',
+            'langkah' => [
+                'Memilih bahan terbaik dari kulkas',
+                'Menyesuaikan dengan selera & pantanganmu',
+                'Menakar bumbu dan urutan memasak',
+                'Menghitung estimasi gizi per porsi',
+                'Memoles tips dapur dari chef',
+            ],
+            'catatan' => 'Semua angka takaran, waktu masak, dan kalori dihitung langsung oleh AI, bukan contoh jadi.',
+        ])
+        <div class="ai-bayang" aria-hidden="true">
+            <i class="sedang"></i>
+            <i></i>
+            <i class="pendek"></i>
+            <i class="sedang"></i>
         </div>
     </div>
 
@@ -477,9 +498,17 @@
 
             <div class="modal-body">
                 <!-- Loading State -->
-                <div x-show="substituteLoading" class="stack-12 text-center" style="padding:24px 0">
-                    <span class="spinner" style="display:inline-block; border-color:rgba(234,88,12,.35); border-top-color:var(--brand); width:28px; height:28px"></span>
-                    <p class="text-sm text-muted mb-0">Gemini AI sedang mencari alternatif bahan dan menghitung rasio takaran...</p>
+                <div x-show="substituteLoading">
+                    @include('partials.ai-wait', [
+                        'ringkas' => true,
+                        'judul' => 'Gemini AI Mencari Bahan Pengganti',
+                        'langkah' => [
+                            'Membandingkan tekstur dan aroma',
+                            'Menghitung ulang rasio takaran',
+                            'Menilai rasa akhir masakan',
+                        ],
+                        'catatan' => 'Alternatif dipilih dari bahan yang paling mudah ditemukan di pasar.',
+                    ])
                 </div>
 
                 <!-- Results State -->
