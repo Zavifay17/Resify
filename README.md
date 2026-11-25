@@ -1,5 +1,18 @@
 # Resify
 
+## Instalasi cepat
+
+```bash
+composer install
+cp .env.example .env && php artisan key:generate
+php artisan migrate --seed
+php artisan storage:link
+php artisan serve
+```
+
+`storage:link` wajib dijalankan: tanpanya folder `public/storage` hanya jadi
+folder kosong sehingga foto hasil unggahan di Deteksi Foto tidak bisa dibuka.
+
 ## Masuk & Daftar dengan Akun Google
 
 Sistem mencatat `google_id`, email, dan foto profil dari akun Google, jadi akun
