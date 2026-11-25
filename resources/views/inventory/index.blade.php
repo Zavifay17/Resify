@@ -154,7 +154,7 @@
             <div class="filter-group">
                 <h4>Kategori:</h4>
                 @php
-                    $categories = ['all' => 'Semua', 'Bumbu Dapur' => 'Bumbu Dapur', 'Protein Hewani' => 'Protein Hewani', 'Protein Nabati' => 'Protein Nabati', 'Sayuran' => 'Sayuran Segar', 'Karbohidrat' => 'Karbohidrat', 'Saus & Minyak' => 'Saus & Minyak'];
+                    $categories = ['all' => 'Semua', 'Bumbu Dapur' => 'Bumbu Dapur', 'Bumbu Instan & Kemasan' => 'Kemasan', 'Protein Hewani' => 'Protein Hewani', 'Protein Nabati' => 'Protein Nabati', 'Sayuran' => 'Sayuran Segar', 'Karbohidrat' => 'Karbohidrat', 'Bahan Kering & Tepung' => 'Kering', 'Saus & Minyak' => 'Saus & Minyak'];
                     $currentCat = request('category', 'all');
                 @endphp
                 <div class="flex flex-wrap gap-4">
@@ -381,6 +381,8 @@
                                 <option value="Protein Hewani">Protein Hewani</option>
                                 <option value="Protein Nabati">Protein Nabati</option>
                                 <option value="Bumbu Dapur">Bumbu Dapur &amp; Rempah</option>
+                                <option value="Bumbu Instan & Kemasan">Bumbu Instan &amp; Kemasan</option>
+                                <option value="Bahan Kering & Tepung">Bahan Kering &amp; Tepung</option>
                                 <option value="Karbohidrat">Karbohidrat / Pokok</option>
                                 <option value="Saus & Minyak">Saus &amp; Minyak</option>
                                 <option value="Buah">Buah-buahan</option>
@@ -464,6 +466,8 @@
                                 <option value="Protein Hewani">Protein Hewani</option>
                                 <option value="Protein Nabati">Protein Nabati</option>
                                 <option value="Bumbu Dapur">Bumbu Dapur</option>
+                                <option value="Bumbu Instan & Kemasan">Bumbu Instan &amp; Kemasan</option>
+                                <option value="Bahan Kering & Tepung">Bahan Kering &amp; Tepung</option>
                                 <option value="Karbohidrat">Karbohidrat</option>
                                 <option value="Saus & Minyak">Saus &amp; Minyak</option>
                                 <option value="Buah">Buah</option>

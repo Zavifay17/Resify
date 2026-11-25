@@ -604,6 +604,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
 .preview-frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--bg-alt); aspect-ratio: 4/3; }
 .preview-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+.sample-thumb { display: grid; gap: 3px; padding: 8px; text-align: center; cursor: pointer; }
+.sample-thumb img { width: 100%; height: 76px; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--line); background: var(--bg-alt); }
+.sample-thumb span:last-child { font-size: 11px; line-height: 1.3; }
+.card.sample-thumb.is-dashed { border-color: var(--brand); background: var(--brand-soft); }
+
 .conf-bar { height: 5px; border-radius: var(--radius-pill); background: var(--bg-alt); overflow: hidden; }
 .conf-bar > span { display: block; height: 100%; background: var(--ok); }
 

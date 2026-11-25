@@ -197,32 +197,32 @@ PROMPT;
     public function analyzeFridgeVision(string $imagePathOrBase64, string $mimeType = 'image/jpeg'): array
     {
         $prompt = <<<PROMPT
-Anda adalah Model Computer Vision & AI Agent Cerdas spesialis Deteksi Komprehensif Bahan Makanan Segar, Belanjaan Pasar Tradisional, & Isi Kulkas pada sistem Resepify (Universitas BSI).
+Anda adalah mesin Computer Vision Resepify, ahli mengenali bahan masakan Indonesia: sayuran, bumbu & rempah, protein, buah, bahan kering, sampai produk kemasan (sachet bumbu instan, botol, kaleng, kotak).
 
-TUGAS UTAMA: LAKUKAN DETEKSI LENGKAP & MENYELURUH (DENSE OBJECT DETECTION):
-1. Pindai foto secara teliti dari ujung ke ujung, termasuk di dalam kantong plastik bening, keranjang/tampah, maupun rak kulkas.
-2. PENTING: JANGAN BATASI HANYA PADA 2 ATAU 3 BAHAN! Jika dalam gambar terdapat banyak bahan makanan belanjaan/sayuran/bumbu, kenali dan pisahkan SEMUA jenis bahan yang terlihat satu per satu (targetkan mendeteksi 8 sampai 25 item bahan makanan jika terlihat banyak!).
-3. Kenali setiap objek bahan yang tampak, seperti:
-   - Sayuran: Wortel, Kentang, Kol/Kubis, Kembang Kol, Brokoli, Labu Siam, Jagung Manis, Timun, Terong Ungu, Kangkung, Bayam, Sawi/Pakcoy, Buncis, Kacang Panjang, Tomat Segar.
-   - Bumbu Dapur: Bawang Merah, Bawang Putih, Cabai Rawit Merah, Cabai Rawit Hijau, Cabai Merah Keriting, Daun Bawang, Seledri, Jahe, Kunyit, Serai, Lengkuas.
-   - Protein: Telur Ayam, Tahu, Tempe, Daging Ayam, Daging Sapi, Ikan Segar, Udang, Bakso, Sosis.
-   - Buah & Karbohidrat: Apel, Jeruk, Pisang, Beras, Mie.
-4. Tentukan takaran/jumlah perkiraan yang wajar dan satuan yang umum digunakan di Indonesia (butir, ikat, buah, siung, gram, bungkus).
-5. Tentukan estimasi daya tahan simpan (typical_shelf_life_days) dan lokasi simpan terbaik ("Kulkas (Chiller)", "Freezer", "Lemari Kering (Pantry)").
+ATURAN DETEKSI (WAJIB DIIKUTI):
+1. DAFTARKAN HANYA BAHAN YANG BENAR-BENAR TERLIHAT PADA FOTO INI. Dilarang menambahkan bahan populer yang tidak ada di dalam gambar. Jika yang terlihat hanya 2 bahan, kembalikan tepat 2 item.
+2. Pindai seluruh area foto tanpa terlewat: rak kulkas, dalam kantong plastik bening, tampah, keranjang belanja, toples, dan tumpukan produk di rak toko.
+3. Kenali bentuk bahan: segar, beku, kering, dan KEMASAN. Untuk sachet/cup/kotak/kaleng, baca tulisan pada kemasan lalu tulis nama lengkapnya beserta varian, contoh "Bumbu Instan Balado (sachet)" atau "Santan Kara 65 ml (sachet)". Setiap varian rasa dihitung satu item terpisah.
+4. Tulis item_name ringkas maksimal 4 kata (tidak termasuk keterangan kemasan di dalam tanda kurung), tanpa mengulang merek dan kata "bumbu" dua kali.
+5. Kenali juga bahan yang sering terlewat: daun salam, daun jeruk, serai, lengkuas, kunyit, jahe, kencur, asam jawa, kemiri, ketumbar, jintan, kayu manis, cengkeh, pala, andaliman, garam, gula merah, terasi, kecap, saus, minyak goreng, susu/santan kotak, mie kering, bihun, tepung, kacang-kacangan, jamur, tempe, tahu, telur, ikan, udang, ayam, daging.
+6. Jika foto sama sekali bukan bahan makanan (misalnya orang, hewan peliharaan, layar, dokumen, pemandangan), kembalikan "detected_items" sebagai array kosong dan jelaskan alasannya pada "summary".
+7. "estimated_quantity" adalah jumlah yang benar-benar terlihat atau terbaca pada kemasan (contoh: 6 butir telur, 3 sachet, 1 ikat kangkung). Satuan umum Indonesia: buah, siung, butir, ikat, batang, genggam, gram, ml, sachet, bungkus, kotak, kaleng, papan, ekor, potong.
+8. "typical_shelf_life_days" dan "storage_location" mengikuti bentuk bahannya: bahan segar -> "Kulkas (Chiller)", bahan beku -> "Freezer", bahan kering/kemasan -> "Lemari Kering (Pantry)".
+9. Isi "freshness_notes" dengan ciri visual yang memang terlihat di foto (warna, tekstur, kemasan terbuka/tertutup), bukan kalimat umum.
 
 Kembalikan respon HANYA dalam format JSON String terstruktur dengan skema berikut:
 {
-  "summary": "Ringkasan komprehensif AI mendeteksi X jenis bahan makanan dari foto yang diunggah.",
+  "summary": "Ringkasan singkat: AI mendeteksi X jenis bahan dari foto ini",
   "detected_items": [
     {
-      "item_name": "Nama Bahan Baku Bahasa Indonesia (contoh: Wortel Segar, Cabai Rawit Merah, Daun Bawang, Kentang Dieng, Jagung Manis)",
-      "category": "Pilih salah satu: Sayuran, Protein Hewani, Protein Nabati, Bumbu Dapur, Karbohidrat, Buah, Susu & Olahan, Saus & Minyak",
+      "item_name": "Nama bahan dalam Bahasa Indonesia, spesifik sesuai yang terlihat",
+      "category": "Pilih salah satu: Sayuran, Bumbu Dapur, Bumbu Instan & Kemasan, Protein Hewani, Protein Nabati, Karbohidrat, Buah, Susu & Olahan, Saus & Minyak, Bahan Kering & Tepung",
       "estimated_quantity": 2.0,
-      "unit": "Satuan (misal: buah, ikat, butir, siung, batang, bungkus, gram)",
+      "unit": "satuan (buah, ikat, butir, siung, batang, sachet, bungkus, gram, ml, papan, ekor)",
       "confidence_score": 0.95,
       "typical_shelf_life_days": 7,
       "storage_location": "Kulkas (Chiller)",
-      "freshness_notes": "Kondisi fisik bahan tampak segar dan baik"
+      "freshness_notes": "Kondisi fisik bahan yang terlihat pada foto"
     }
   ]
 }
@@ -230,108 +230,223 @@ PROMPT;
 
         $startTime = microtime(true);
 
-        if (!empty($this->apiKey)) {
-            try {
-                // Siapkan data gambar base64
-                $imageData = $imagePathOrBase64;
-                if (filter_var($imagePathOrBase64, FILTER_VALIDATE_URL)) {
-                    $dl = Http::withoutVerifying()->timeout(20)->get($imagePathOrBase64);
-                    if ($dl->successful()) {
-                        $imageData = base64_encode($dl->body());
-                        $mimeType = $dl->header('Content-Type') ?: 'image/jpeg';
-                    }
-                } elseif (file_exists($imagePathOrBase64)) {
-                    $imageData = base64_encode(file_get_contents($imagePathOrBase64));
-                    $mimeType = mime_content_type($imagePathOrBase64) ?: $mimeType;
-                } elseif (str_contains($imagePathOrBase64, ';base64,')) {
-                    $parts = explode(';base64,', $imagePathOrBase64);
-                    $mimeType = str_replace('data:', '', $parts[0]);
-                    $imageData = $parts[1];
-                }
+        if (empty($this->apiKey)) {
+            // Mode demo: kunci API belum diisi, jadi tampilkan contoh hasil deteksi dan beri label jelas.
+            $fallbackData = $this->getMockVisionResponse();
+            $this->logApiCall(
+                auth()->id(),
+                'vision_detection',
+                'engine-cerdas-lokal',
+                'Mode demo: hasil contoh, foto tidak dikirim ke Gemini',
+                0,
+                0,
+                0,
+                180,
+                'fallback',
+                null,
+                json_encode($fallbackData)
+            );
 
-                $payload = [
-                    'contents' => [
+            return [
+                'success' => true,
+                'data' => $fallbackData,
+                'is_simulated' => true,
+                'notice' => 'Mode demo aktif: daftar bahan di bawah adalah contoh, bukan hasil foto Anda. Isi Gemini API Key di Pengaturan untuk deteksi asli.',
+                'latency_ms' => 180
+            ];
+        }
+
+        try {
+            [$imageData, $mimeType] = $this->siapkanGambarVision($imagePathOrBase64, $mimeType);
+        } catch (\Throwable $e) {
+            Log::warning('Foto deteksi tidak terbaca: ' . $e->getMessage());
+
+            return $this->catatKegagalanVision($e->getMessage(), $startTime);
+        }
+
+        $payload = [
+            'contents' => [
+                [
+                    'role' => 'user',
+                    'parts' => [
+                        ['text' => $prompt],
                         [
-                            'role' => 'user',
-                            'parts' => [
-                                ['text' => $prompt],
-                                [
-                                    'inlineData' => [
-                                        'mimeType' => $mimeType,
-                                        'data' => $imageData
-                                    ]
-                                ]
+                            'inlineData' => [
+                                'mimeType' => $mimeType,
+                                'data' => $imageData
                             ]
                         ]
-                    ],
-                    'generationConfig' => [
-                        'responseMimeType' => 'application/json',
-                        'temperature' => 0.2,
-                        'maxOutputTokens' => 8192,
                     ]
+                ]
+            ],
+            'generationConfig' => [
+                'responseMimeType' => 'application/json',
+                'temperature' => 0.2,
+                'maxOutputTokens' => 8192,
+            ]
+        ];
+
+        $hasil = $this->kirimKeGemini($payload, 45);
+
+        if (isset($hasil['text'])) {
+            $parsed = $this->cleanAndParseJson($hasil['text']);
+
+            if (!empty($parsed) && isset($parsed['detected_items'])) {
+                $executionTime = (int) round((microtime(true) - $startTime) * 1000);
+                $usage = $hasil['usage'];
+
+                $this->logApiCall(
+                    auth()->id(),
+                    'vision_detection',
+                    $hasil['model'],
+                    'Deteksi Computer Vision Bahan Makanan',
+                    $usage['promptTokenCount'] ?? 250,
+                    $usage['candidatesTokenCount'] ?? 150,
+                    $usage['totalTokenCount'] ?? 400,
+                    $executionTime,
+                    'success',
+                    null,
+                    $hasil['text']
+                );
+
+                return [
+                    'success' => true,
+                    'data' => [
+                        'summary' => (string) ($parsed['summary'] ?? 'AI selesai membaca foto.'),
+                        'detected_items' => $this->rapikanHasilVision((array) $parsed['detected_items']),
+                    ],
+                    'is_simulated' => false,
+                    'model' => $hasil['model'],
+                    'latency_ms' => $executionTime
                 ];
+            }
 
-                $hasil = $this->kirimKeGemini($payload, 45);
+            Log::warning('Gemini Vision membalas di luar skema: ' . substr($hasil['text'], 0, 300));
+            $pesanGalat = 'Jawaban AI tidak berbentuk daftar bahan. Silakan pindai ulang fotonya.';
+        } else {
+            $pesanGalat = $this->pesanGalatGemini((string) ($hasil['error'] ?? 'Gemini tidak memberikan jawaban.'));
+        }
 
-                if (isset($hasil['text'])) {
-                    $parsed = $this->cleanAndParseJson($hasil['text']);
+        return $this->catatKegagalanVision($pesanGalat, $startTime);
+    }
 
-                    if (!empty($parsed) && isset($parsed['detected_items'])) {
-                        $executionTime = (int) round((microtime(true) - $startTime) * 1000);
-                        $usage = $hasil['usage'];
+    /**
+     * Ubah path / URL / data URI gambar menjadi pasangan [base64, mime] yang siap dikirim ke Gemini.
+     * Path yang tidak ditemukan sengaja dilempar sebagai error supaya hasil palsu tidak pernah muncul.
+     */
+    protected function siapkanGambarVision(string $sumber, string $mimeType): array
+    {
+        if (str_contains($sumber, ';base64,')) {
+            $parts = explode(';base64,', $sumber, 2);
 
-                        $this->logApiCall(
-                            auth()->id(),
-                            'vision_detection',
-                            $hasil['model'],
-                            'Deteksi Computer Vision Bahan Makanan',
-                            $usage['promptTokenCount'] ?? 250,
-                            $usage['candidatesTokenCount'] ?? 150,
-                            $usage['totalTokenCount'] ?? 400,
-                            $executionTime,
-                            'success',
-                            null,
-                            $hasil['text']
-                        );
+            return [$parts[1], str_replace('data:', '', $parts[0]) ?: $mimeType];
+        }
 
-                        return [
-                            'success' => true,
-                            'data' => $parsed,
-                            'is_simulated' => false,
-                            'model' => $hasil['model'],
-                            'latency_ms' => $executionTime
-                        ];
-                    }
+        if (preg_match('#^https?://#i', $sumber)) {
+            $dl = Http::withoutVerifying()->timeout(25)->get($sumber);
 
-                    Log::warning('Gemini Vision membalas di luar skema yang diminta, memakai fallback.');
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Gemini Vision API error, using intelligent fallback: ' . $e->getMessage());
+            if (!$dl->successful() || strlen($dl->body()) < 512) {
+                throw new \RuntimeException('Foto contoh gagal diambil dari server.');
+            }
+
+            return [base64_encode($dl->body()), $dl->header('Content-Type') ?: 'image/jpeg'];
+        }
+
+        $path = str_replace('\\', '/', trim($sumber));
+
+        if (!is_file($path)) {
+            throw new \RuntimeException('Berkas foto tidak ditemukan di server. Unggah ulang fotonya lalu pindai lagi.');
+        }
+
+        $isi = file_get_contents($path);
+
+        if ($isi === false || strlen($isi) < 512) {
+            throw new \RuntimeException('Berkas foto terlalu kecil atau rusak untuk dianalisis.');
+        }
+
+        return [base64_encode($isi), (mime_content_type($path) ?: $mimeType)];
+    }
+
+    /**
+     * Jaga agar setiap item hasil AI punya nilai wajib yang dibutuhkan form inventaris.
+     */
+    protected function rapikanHasilVision(array $items): array
+    {
+        $bersih = [];
+
+        foreach ($items as $item) {
+            if (!is_array($item) || empty($item['item_name'])) {
+                continue;
+            }
+
+            $jumlah = is_numeric($item['estimated_quantity'] ?? null) ? (float) $item['estimated_quantity'] : 1.0;
+
+            $bersih[] = [
+                'item_name' => trim((string) $item['item_name']),
+                'category' => trim((string) ($item['category'] ?? 'Bahan Pokok')) ?: 'Bahan Pokok',
+                'estimated_quantity' => $jumlah > 0 ? $jumlah : 1.0,
+                'unit' => trim((string) ($item['unit'] ?? 'buah')) ?: 'buah',
+                'confidence_score' => (float) ($item['confidence_score'] ?? 0.8),
+                'typical_shelf_life_days' => max(1, (int) ($item['typical_shelf_life_days'] ?? 7)),
+                'storage_location' => trim((string) ($item['storage_location'] ?? 'Kulkas (Chiller)')) ?: 'Kulkas (Chiller)',
+                'freshness_notes' => trim((string) ($item['freshness_notes'] ?? 'Terdeteksi otomatis via Vision AI')),
+            ];
+
+            if (count($bersih) >= 40) {
+                break;
             }
         }
 
-        // Intelligent Fallback jika API key belum aktif / offline
-        $fallbackData = $this->getMockVisionResponse();
+        return $bersih;
+    }
+
+    /**
+     * Terjemahkan pesan error Google ke instruksi yang bisa langsung dilakukan pengguna.
+     */
+    protected function pesanGalatGemini(string $error): string
+    {
+        if (str_contains($error, 'API key') || str_contains($error, 'INVALID_ARGUMENT') || str_contains($error, 'permission')) {
+            return 'Gemini API Key ditolak Google. Perbarui kunci di Pengaturan > Gemini, lalu pindai ulang.';
+        }
+
+        if (str_contains($error, '429') || str_contains($error, 'quota') || str_contains($error, 'rate')) {
+            return 'Kuota Gemini sedang penuh. Tunggu sekitar satu menit lalu pindai ulang.';
+        }
+
+        if (str_contains($error, 'timed out') || str_contains($error, 'cURL error 28')) {
+            return 'Koneksi ke Gemini sempat terputus. Pastikan foto tidak terlalu besar lalu pindai ulang.';
+        }
+
+        if (str_contains($error, '503') || str_contains($error, 'not ready')) {
+            return 'Layanan Gemini sedang padat. Ulangi pemindaian beberapa saat lagi.';
+        }
+
+        return 'Deteksi bahan gagal selesai: ' . $error;
+    }
+
+    protected function catatKegagalanVision(string $pesan, float $startTime): array
+    {
+        $executionTime = (int) round((microtime(true) - $startTime) * 1000);
+
         $this->logApiCall(
             auth()->id(),
             'vision_detection',
-            empty($this->apiKey) ? 'engine-cerdas-lokal' : $this->model,
-            'Engine Cerdas Resepify (deteksi foto tidak hit ke API)',
+            $this->model,
+            'Deteksi Computer Vision Bahan Makanan',
             0,
             0,
             0,
-            180,
-            'fallback',
-            null,
-            json_encode($fallbackData)
+            $executionTime,
+            'error',
+            $pesan,
+            null
         );
 
         return [
-            'success' => true,
-            'data' => $fallbackData,
-            'is_simulated' => true,
-            'notice' => empty($this->apiKey) ? 'Mode demo cerdas aktif. Masukkan Gemini API Key Anda di Pengaturan untuk deteksi foto kulkas Anda sendiri!' : null,
-            'latency_ms' => 180
+            'success' => false,
+            'message' => $pesan,
+            'is_simulated' => false,
+            'latency_ms' => $executionTime
         ];
     }
 

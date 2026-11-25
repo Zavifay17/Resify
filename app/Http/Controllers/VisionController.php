@@ -28,7 +28,33 @@ class VisionController extends Controller
     public function index()
     {
         $user = Auth::user();
-        return view('vision.index', compact('user'));
+
+        return view('vision.index', [
+            'user' => $user,
+            'sampel' => $this->daftarSampel(),
+        ]);
+    }
+
+    /**
+     * Foto contoh berlisensi bebas yang disimpan lokal (public/images/samples)
+     supaya tombol sampel dan foto yang dikirim ke AI selalu gambar yang sama.
+     */
+    private function daftarSampel(): array
+    {
+        $daftar = [
+            'kulkas' => ['label' => 'Kulkas Sayur', 'file' => 'kulkas-sayur.jpg', 'ket' => 'Sayuran & telur di dalam kulkas'],
+            'pasar' => ['label' => 'Belanja Pasar', 'file' => 'belanja-pasar.jpg', 'ket' => 'Belanjaan pasar tradisional'],
+            'bumbu' => ['label' => 'Bumbu Dapur', 'file' => 'bumbu-dapur.jpg', 'ket' => 'Bumbu & rempah masakan'],
+            'sachet' => ['label' => 'Bumbu Sachet', 'file' => 'bumbu-sachet.jpg', 'ket' => 'Bumbu instan kemasan sachet'],
+        ];
+
+        foreach ($daftar as $key => $item) {
+            $daftar[$key]['path'] = public_path('images/samples/' . $item['file']);
+            $daftar[$key]['url'] = asset('images/samples/' . $item['file']);
+            $daftar[$key]['key'] = $key;
+        }
+
+        return $daftar;
     }
 
     public function analyze(Request $request)
@@ -45,11 +71,21 @@ class VisionController extends Controller
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-            $filename = 'fridge_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('public/vision_uploads', $filename);
-            $imagePath = storage_path('app/' . $path);
-            $mimeType = $file->getMimeType();
-            $imageUrl = asset('storage/vision_uploads/' . $filename);
+            $ext = strtolower($file->guessExtension() ?: 'jpg');
+            $filename = 'fridge_' . bin2hex(random_bytes(6)) . '.' . $ext;
+
+            // Disk public sudah berakar di storage/app/public, jadi folder cukup "vision_uploads"
+            $path = $file->storeAs('vision_uploads', $filename, 'public');
+            if (!$path) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Foto gagal disimpan di server. Periksa izin tulis folder storage lalu ulangi.'
+                ], 500);
+            }
+
+            $imagePath = Storage::disk('public')->path($path);
+            $mimeType = $file->getMimeType() ?: 'image/jpeg';
+            $imageUrl = asset('storage/' . $path);
 
             // Coba upload ke Supabase Storage jika aktif
             if ($this->supabaseService->isConfigured()) {
@@ -59,37 +95,19 @@ class VisionController extends Controller
                 }
             }
         } elseif ($request->filled('sample')) {
-            // Sampel foto demo kulkas untuk presentasi sidang
-            $sampleKey = $request->sample;
-            $samples = [
-                'fridge_1' => [
-                    'url' => 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=80',
-                    'name' => 'Kulkas Sayur & Telur Segar'
-                ],
-                'fridge_2' => [
-                    'url' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80',
-                    'name' => 'Keranjang Belanjaan Pasar Tradisional'
-                ],
-                'fridge_3' => [
-                    'url' => 'https://images.unsplash.com/photo-1571171637578-41bc2dd41cd2?auto=format&fit=crop&w=800&q=80',
-                    'name' => 'Bahan Dapur & Bumbu Masak'
-                ]
-            ];
+            // Sampel foto demo untuk presentasi: file lokal, tidak perlu unduh saat runtime
+            $sampel = $this->daftarSampel()[$request->sample] ?? null;
 
-            $selected = $samples[$sampleKey] ?? $samples['fridge_1'];
-            $imageUrl = $selected['url'];
-
-            // Download sampel lokal temporer untuk analisis vision
-            $tempPath = storage_path('app/public/vision_uploads/sample_' . $sampleKey . '.jpg');
-            if (!file_exists($tempPath)) {
-                try {
-                    $content = file_get_contents($imageUrl);
-                    file_put_contents($tempPath, $content);
-                } catch (\Throwable $e) {
-                    // ignore
-                }
+            if (!$sampel || !is_file($sampel['path'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Foto contoh "' . ($sampel['label'] ?? $request->sample) . '" tidak ditemukan di server.'
+                ], 422);
             }
-            $imagePath = file_exists($tempPath) ? $tempPath : $imageUrl;
+
+            $imagePath = $sampel['path'];
+            $mimeType = mime_content_type($imagePath) ?: 'image/jpeg';
+            $imageUrl = $sampel['url'];
         } elseif ($request->filled('image_base64')) {
             $imagePath = $request->image_base64;
             // Jika dikirim berupa base64 data URI dari capture kamera langsung
@@ -100,11 +118,12 @@ class VisionController extends Controller
                     $mimeType = str_replace('data:', '', $rawHeader) ?: 'image/jpeg';
                     $decoded = base64_decode($parts[1]);
                     $ext = str_contains($mimeType, 'png') ? 'png' : 'jpg';
-                    $filename = 'capture_' . uniqid() . '.' . $ext;
-                    \Illuminate\Support\Facades\Storage::put('public/vision_uploads/' . $filename, $decoded);
+                    $filename = 'capture_' . bin2hex(random_bytes(6)) . '.' . $ext;
+                    Storage::disk('public')->put('vision_uploads/' . $filename, $decoded);
+                    $imagePath = Storage::disk('public')->path('vision_uploads/' . $filename);
                     $imageUrl = asset('storage/vision_uploads/' . $filename);
                 } catch (\Throwable $e) {
-                    // Simpan fallback jika error
+                    // Analisis tetap berjalan memakai data URI aslinya
                 }
             }
         } else {

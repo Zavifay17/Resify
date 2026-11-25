@@ -97,3 +97,18 @@ Latar foto bahan masakan pada halaman Masuk/Daftar adalah foto
 karya [Andre Benz (@trapnation)](https://unsplash.com/@trapnation) dari Unsplash
 (lisensi bebas Unsplash), disimpan lokal di
 `public/images/auth/bahan-dapur-unsplash.jpg`.
+
+### Foto contoh sampel Deteksi Foto
+
+Empat tombol "Atau Uji Contoh Sampel" memakai berkas lokal di
+`public/images/samples/`, jadi foto yang ditampilkan dan foto yang dikirim ke AI
+selalu gambar yang sama (tanpa dependensi internet saat demo):
+
+| Berkas | Isi | Sumber | Lisensi |
+| --- | --- | --- | --- |
+| `kulkas-sayur.jpg` | Sayur & buah di dalam kulkas | Wikimedia Commons, *Fruits and Vegetables in Refrigerator* karya Alabama Extension | CC0 |
+| `belanja-pasar.jpg` | Los pasar tradisional (timun, wortel, serai, rimpang) | Wikimedia Commons, *Pasar Rakyat Kedungmaling 075305* karya Abdul Hanif Arromy | CC BY 4.0 |
+| `bumbu-dapur.jpg` | Rempah & bumbu dapur nusantara | Wikimedia Commons, *Ragam Rempah dan Bumbu Dapur* karya M Joko Apriyo Putro | CC BY-SA 4.0 |
+| `bumbu-sachet.jpg` | Bumbu instan sachet (merek fiktif "Racik Nusa") | Hasil gambar AI (ImageGen), bukan merek dagang nyata | bebas dipakai |
+
+Daftar berkasnya dijaga satu sumber di `VisionController::daftarSampel()`.

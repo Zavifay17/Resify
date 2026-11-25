@@ -15,6 +15,7 @@
     detectedItems: [],
     summary: '',
     latency: 0,
+    demoNotice: '',
 
     init() {
         // Otomatis buka kamera jika di tab kamera
@@ -129,6 +130,7 @@
             this.previewUrl = URL.createObjectURL(file);
             this.detectedItems = [];
             this.summary = '';
+            this.demoNotice = '';
         }
     },
 
@@ -138,6 +140,7 @@
         this.previewUrl = url;
         this.detectedItems = [];
         this.summary = '';
+        this.demoNotice = '';
     },
 
     removeItem(index) {
@@ -150,6 +153,16 @@
     getIcon(name) {
         if (!name) return '🥦';
         const raw = name.toLowerCase();
+        if (raw.includes('sachet') || raw.includes('bumbu instan') || raw.includes('racik') || raw.includes('bumbu')) return '🧂';
+        if (raw.includes('kaleng')) return '🥫';
+        if (raw.includes('kotak') || raw.includes('kemasan') || raw.includes('sachet')) return '📦';
+        if (raw.includes('santan') || raw.includes('susu')) return '🥛';
+        if (raw.includes('kecap') || raw.includes('saus') || raw.includes('minyak')) return '🍶';
+        if (raw.includes('tepung') || raw.includes('beras') || raw.includes('nasi')) return '🍚';
+        if (raw.includes('gula')) return '🍬';
+        if (raw.includes('garam')) return '🧂';
+        if (raw.includes('mie') || raw.includes('bihun') || raw.includes('pasta')) return '🍜';
+        if (raw.includes('jahe') || raw.includes('kunyit') || raw.includes('lengkuas') || raw.includes('serai') || raw.includes('kencur')) return '🫚';
         if (raw.includes('wortel')) return '🥕';
         if (raw.includes('paprika')) return '🫑';
         if (raw.includes('timun') || raw.includes('mentimun')) return '🥒';
@@ -218,10 +231,18 @@
                 this.detectedItems = res.data.detected_items || [];
                 this.summary = res.data.summary || '';
                 this.latency = res.latency_ms || 0;
-                if (res.image_url) {
-                    this.previewUrl = res.image_url;
-                }
+                this.demoNotice = res.notice || '';
                 lucide.createIcons();
+
+                if (this.detectedItems.length === 0) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Tidak Ada Bahan Makanan',
+                        text: 'AI tidak menemukan bahan makanan pada foto ini. Coba foto yang lebih jelas atau pilih contoh sampel.',
+                        background: '#111C38',
+                        color: '#fff'
+                    });
+                }
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -358,27 +379,18 @@
                         </div>
                     </label>
 
-                    {{-- Pilihan Contoh Sampel Cepat --}}
+    {{-- Pilihan Contoh Sampel Cepat --}}
                     <div>
                         <div class="eyebrow" style="margin-bottom:6px">Atau Uji Contoh Sampel:</div>
-                        <div class="grid grid-3 gap-8">
-                            <button type="button" @click="selectSample('fridge_1', 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=80')"
-                                class="card" :class="selectedSample === 'fridge_1' ? 'is-dashed' : ''"
-                                style="padding:6px; text-align:center; cursor:pointer">
-                                <span class="text-xs strong">Kulkas Sayur</span>
-                            </button>
-
-                            <button type="button" @click="selectSample('fridge_2', 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80')"
-                                class="card" :class="selectedSample === 'fridge_2' ? 'is-dashed' : ''"
-                                style="padding:6px; text-align:center; cursor:pointer">
-                                <span class="text-xs strong">Belanja Pasar</span>
-                            </button>
-
-                            <button type="button" @click="selectSample('fridge_3', 'https://images.unsplash.com/photo-1571171637578-41bc2dd41cd2?auto=format&fit=crop&w=800&q=80')"
-                                class="card" :class="selectedSample === 'fridge_3' ? 'is-dashed' : ''"
-                                style="padding:6px; text-align:center; cursor:pointer">
-                                <span class="text-xs strong">Bumbu Dapur</span>
-                            </button>
+                        <div class="grid grid-2 gap-8">
+                            @foreach ($sampel as $key => $s)
+                                <button type="button" @click="selectSample('{{ $key }}', '{{ $s['url'] }}')"
+                                    class="card sample-thumb" :class="selectedSample === '{{ $key }}' ? 'is-dashed' : ''">
+                                    <img src="{{ $s['url'] }}" alt="{{ $s['label'] }}" loading="lazy">
+                                    <span class="text-xs strong">{{ $s['label'] }}</span>
+                                    <span class="text-xs text-muted">{{ $s['ket'] }}</span>
+                                </button>
+                            @endforeach
                         </div>
                     </div>
 
@@ -429,6 +441,11 @@
                         <span class="hint text-xs text-muted" x-text="summary"></span>
                     </div>
                     <span class="chip chip-brand mono strong" x-text="detectedItems.length + ' Item'"></span>
+                </div>
+
+                <div x-show="demoNotice" class="alert alert-warn" style="margin:12px 16px 0">
+                    <i data-lucide="alert-triangle"></i>
+                    <div class="body text-xs" x-text="demoNotice"></div>
                 </div>
 
                 <form action="{{ route('vision.save-batch') }}" method="POST">
