@@ -55,7 +55,7 @@ class GeminiService
                 [
                     'role' => 'user',
                     'parts' => [
-                        ['text' => 'Halo Gemini, konfirmasi dalam 1 kalimat bahasa Indonesia bahwa kamu siap digunakan untuk sistem resep masakan cerdas Resepify kampus BSI!']
+                        ['text' => 'Halo Gemini, konfirmasi dalam 1 kalimat bahasa Indonesia bahwa kamu siap digunakan untuk sistem resep masakan cerdas Resepify!']
                     ]
                 ]
             ],
@@ -136,7 +136,7 @@ class GeminiService
         $skill = $preferences['cooking_skill'] ?? 'Menengah';
 
         $prompt = <<<PROMPT
-Anda adalah Chef Eksekutif & Ahli Gizi kuliner profesional pada aplikasi "Resepify" (Tugas Akhir RPL Universitas BSI).
+Anda adalah Chef Eksekutif & Ahli Gizi kuliner profesional pada aplikasi "Resepify" (Sistem Inventaris Dapur & Generator Resep Berbasis AI).
 Tugas Anda adalah merancang SATU resep masakan lezat, praktis, dan logis yang BERPUSAT PADA BAHAN-BAHAN PILIHAN PENGGUNA BERIKUT:
 Bahan Terpilih dari Kulkas Pengguna: [{$ingredientsList}]
 

@@ -36,10 +36,12 @@ class SettingController extends Controller
             $supabaseRef = $matches[1];
         }
 
-        $campusName = SystemSetting::get('campus_name', 'Universitas Bina Sarana Informatika');
-        $studentNim = $user->nim ?? SystemSetting::get('student_nim', '12210889');
         $studentName = $user->name;
         $perluToken = !$this->supabaseService->punyaTokenKelola();
+
+        $authGoogle = app(AuthController::class);
+        $googleSiap = $authGoogle->googleSiap();
+        $googleCallback = (string) (config('services.google.redirect') ?: url('/auth/google/callback'));
 
         return view('settings.index', compact(
             'user',
@@ -50,10 +52,10 @@ class SettingController extends Controller
             'supabaseBucket',
             'setupSql',
             'supabaseRef',
-            'campusName',
-            'studentNim',
             'studentName',
-            'perluToken'
+            'perluToken',
+            'googleSiap',
+            'googleCallback'
         ));
     }
 
@@ -65,8 +67,8 @@ class SettingController extends Controller
             'supabase_url' => 'nullable|string',
             'supabase_key' => 'nullable|string',
             'supabase_bucket' => 'nullable|string',
-            'campus_name' => 'nullable|string',
-            'student_nim' => 'nullable|string',
+            'google_client_id' => 'nullable|string',
+            'google_client_secret' => 'nullable|string',
         ]);
 
         if (isset($validated['gemini_api_key'])) {
@@ -84,14 +86,12 @@ class SettingController extends Controller
             SystemSetting::set('supabase_bucket', trim($validated['supabase_bucket']), 'Supabase Storage Bucket');
         }
 
-        if (isset($validated['campus_name'])) {
-            SystemSetting::set('campus_name', $validated['campus_name'], 'Nama Kampus');
+        // Disimpan di database supaya login Google langsung aktif tanpa menulis ulang .env.
+        if (!empty($validated['google_client_id'])) {
+            SystemSetting::set('google_client_id', trim($validated['google_client_id']), 'Google OAuth Client ID');
         }
-
-        $user = Auth::user();
-        if ($user && isset($validated['student_nim'])) {
-            $user->nim = $validated['student_nim'];
-            $user->save();
+        if (!empty($validated['google_client_secret'])) {
+            SystemSetting::set('google_client_secret', trim($validated['google_client_secret']), 'Google OAuth Client Secret');
         }
 
         return redirect()->route('settings.index')

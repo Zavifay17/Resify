@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\AiLog;
 use App\Models\KitchenInventory;
 use App\Models\RecipeCache;
-use App\Models\SystemSetting;
 use App\Services\GeminiService;
 use App\Services\InventoryService;
 use App\Services\SupabaseService;
@@ -61,9 +60,7 @@ class DashboardController extends Controller
         $supabaseConfigured = $this->supabaseService->isConfigured();
         $geminiKeyExists = !empty($this->geminiService->getApiKey());
 
-        $campusName = SystemSetting::get('campus_name', 'Universitas Bina Sarana Informatika');
         $studentName = $user->name;
-        $studentNim = $user->nim ?? '12210889';
 
         return view('dashboard.index', compact(
             'user',
@@ -75,9 +72,7 @@ class DashboardController extends Controller
             'totalAiHits',
             'supabaseConfigured',
             'geminiKeyExists',
-            'campusName',
-            'studentName',
-            'studentNim'
+            'studentName'
         ));
     }
 }

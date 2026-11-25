@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,7 +41,7 @@ class AuthController extends Controller
         $user = User::first();
         if ($user) {
             Auth::login($user);
-            return redirect()->route('dashboard')->with('success', 'Login otomatis sebagai Mahasiswa BSI Tugas Akhir (' . $user->name . ')');
+            return redirect()->route('dashboard')->with('success', 'Login otomatis ke akun demo (' . $user->name . ')');
         }
         return redirect()->route('login');
     }
@@ -76,10 +77,24 @@ class AuthController extends Controller
     // ===== Google OAuth =====
 
     /**
+     * Kredensial boleh disimpan lewat halaman Pengaturan (tabel system_settings);
+     * nilai itu mengalahkan isi .env tanpa perlu menulis ulang berkas .env.
+     */
+    private function muatKredensialGoogle(): void
+    {
+        config([
+            'services.google.client_id' => SystemSetting::get('google_client_id', config('services.google.client_id')),
+            'services.google.client_secret' => SystemSetting::get('google_client_secret', config('services.google.client_secret')),
+        ]);
+    }
+
+    /**
      * Kredensial Google dianggap siap bila Client ID dan Secret sudah diisi.
      */
     public function googleSiap(): bool
     {
+        $this->muatKredensialGoogle();
+
         return filled(config('services.google.client_id')) && filled(config('services.google.client_secret'));
     }
 
@@ -98,7 +113,7 @@ class AuthController extends Controller
     public function googleRedirect()
     {
         if (!$this->googleSiap()) {
-            return redirect()->route('login')->with('error', 'Login Google belum aktif. Isi GOOGLE_CLIENT_ID dan GOOGLE_CLIENT_SECRET di berkas .env, lalu jalankan php artisan config:clear.');
+            return redirect()->route('login')->with('error', 'Login Google belum aktif. Buat OAuth Client ID di Google Cloud Console, lalu isi Client ID dan Secret pada Pengaturan > Login Google.');
         }
 
         try {
@@ -183,7 +198,6 @@ class AuthController extends Controller
         $user = Auth::user();
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'nim' => 'nullable|string|max:30',
             'cooking_skill' => 'required|string',
             'diet_preferences' => 'nullable|array',
             'allergies' => 'nullable|string',
@@ -191,7 +205,6 @@ class AuthController extends Controller
 
         $user->update([
             'name' => $validated['name'],
-            'nim' => $validated['nim'],
             'cooking_skill' => $validated['cooking_skill'],
             'diet_preferences' => $validated['diet_preferences'] ?? [],
             'allergies' => $validated['allergies'],

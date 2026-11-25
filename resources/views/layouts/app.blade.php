@@ -59,7 +59,7 @@
                 <div class="dropdown" x-data="{ open: false }" @click.outside="open = false">
                     <button type="button" class="dropdown-toggle" @click="open = !open">
                         <span class="avatar">{{ strtoupper(substr(optional(auth()->user())->name ?? 'M', 0, 2)) }}</span>
-                        <span class="truncate nama-user" style="max-width:115px">{{ Str::limit(optional(auth()->user())->name ?? 'Mahasiswa', 16) }}</span>
+                        <span class="truncate nama-user" style="max-width:115px">{{ Str::limit(optional(auth()->user())->name ?? 'Pengguna', 16) }}</span>
                         <i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--muted);flex:none"></i>
                     </button>
 
@@ -67,7 +67,6 @@
                         <div class="who">
                             <div class="strong">{{ auth()->user()->name }}</div>
                             <div class="text-xs text-muted">{{ auth()->user()->email }}</div>
-                            <div class="text-xs mono" style="color:var(--brand-dark)">NIM {{ auth()->user()->nim ?? '-' }}</div>
                         </div>
                         <a href="{{ route('settings.index') }}"><i data-lucide="sliders-horizontal"></i> Pengaturan Gemini &amp; Supabase</a>
                         <a href="{{ route('inventory.print') }}" target="_blank" rel="noopener"><i data-lucide="printer"></i> Cetak Laporan Inventaris</a>
@@ -146,8 +145,8 @@
                 <span class="strong">Resepify</span>
             </div>
             <p class="fine mb-0">
-                Tugas Akhir Program Studi Rekayasa Perangkat Lunak<br>
-                Universitas Bina Sarana Informatika (UBSI)
+                Sistem Inventaris Dapur &amp; Generator Resep Berbasis AI<br>
+                Bahan terpakai maksimal, sisa makanan minimal.
             </p>
         </div>
 

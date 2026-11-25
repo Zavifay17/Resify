@@ -3,26 +3,62 @@
 ## Masuk & Daftar dengan Akun Google
 
 Sistem mencatat `google_id`, email, dan foto profil dari akun Google, jadi akun
-yang sama bisa langsung masuk lagi tanpa kata sandi.
+yang sama bisa langsung masuk lagi tanpa kata sandi. Akun yang sebelumnya mendaftar
+manual otomatis ditautkan saat email Google-nya sama.
 
-1. Buka **Google Cloud Console** → *APIs & Services* → *Credentials* →
-   **Create Credentials → OAuth client ID**, tipe **Web application**.
-2. Isi **Authorized JavaScript origins**: `http://localhost:8000`.
-3. Isi **Authorized redirect URIs**: `http://localhost:8000/auth/google/callback`
-   (harus sama persis dengan `GOOGLE_REDIRECT_URI`).
-4. Salin *Client ID* dan *Client Secret* ke `.env`:
+### A. Buat kredensial di Google Cloud Console
 
-   ```dotenv
-   GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=xxxxxxxx
-   GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
-   ```
+1. Buka <https://console.cloud.google.com/> dan pilih (atau buat) project, misalnya
+   **Resepify**.
+2. **APIs & Services → Library** → cari **Google Identity Platforms** → **Enable**
+   (opsional; OAuth bawaan Google sudah bisa dipakai langsung).
+3. **APIs & Services → OAuth consent screen**:
+   - *User Type*: **External** (gratis, siapa pun bisa login).
+   - Isi *App name* (mis. `Resepify`), *User support email*, dan *Developer contact email*.
+   - Pada *Scopes*, tambahkan `openid`, `email`, `profile`.
+   - Klik **Create**.
+4. Selama *Publishing status* masih **Testing**, buka **Audience** →
+   **Test users** → **Add users** → masukkan alamat Gmail yang dipakai untuk uji.
+   Tanpa langkah ini Google menampilkan error `access_denied`.
+5. **APIs & Services → Credentials** → **Create Credentials → OAuth client ID**:
+   - *Application type*: **Web application**.
+   - *Authorized JavaScript origins*: `http://localhost:8000`
+     (dan `http://127.0.0.1:8000` bila perlu).
+   - *Authorized redirect URIs*: `http://localhost:8000/auth/google/callback`
+     — harus **sama persis** dengan URI callback yang ditampilkan di halaman Pengaturan.
+   - Klik **Create**, lalu salin **Client ID** dan **Client Secret**.
 
-5. Jalankan `php artisan config:clear`, lalu buka halaman **Daftar**. Selama kedua
-   kunci belum diisi, tombol Google otomatis disembunyikan agar halaman tetap aman.
+### B. Isi kredensialnya (dua cara)
+
+**Cara 1 — dari aplikasi (paling cepat, tidak menyentuh `.env`):**
+buka **Pengaturan → Login Google**, tempel *Client ID* dan *Client Secret*, klik
+**Simpan konfigurasi API**. Nilai disimpan di tabel `system_settings` dan langsung
+dipakai; tombol Google muncul seketika di halaman Masuk & Daftar.
+
+**Cara 2 — lewat `.env`:**
+
+```dotenv
+GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxxxxxxx
+GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+```
+
+lalu jalankan `php artisan config:clear`.
+
+Kedua cara aman: selama kredensial belum diisi, tombol Google otomatis disembunyikan
+dan tidak ada teks konfigurasi yang muncul di halaman.
+
+### C. Uji
+
+1. Buka `/register` → klik **Daftar dengan Google** → pilih akun → izinkan akses.
+2. Sistem membuat akun baru (`password` kosong, `google_id` terisi) dan langsung masuk.
+3. Klik **Keluar**, buka `/login` → klik **Masuk dengan Google** → akun yang sama
+   masuk lagi tanpa kata sandi.
 
 Catatan teknis: kolom `google_id` dan `password` yang boleh kosong ditambahkan oleh
-migration `2026_11_18_100000_add_google_id_to_users_table.php`.
+migration `2026_11_18_100000_add_google_id_to_users_table.php`. `Client Secret` yang
+disimpan lewat Pengaturan tidak pernah dicerminkan ke Supabase (ada dalam daftar
+`KUNCI_RAHASIA` pada `SupabaseService`).
 
 ## Skema Cloud Supabase & ERD
 

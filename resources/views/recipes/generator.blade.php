@@ -280,7 +280,7 @@
                             <label class="label">Tingkat Keahlian</label>
                             <select x-model="cookingSkill" class="select full">
                                 <option value="Pemula">Pemula (Langkah Sederhana)</option>
-                                <option value="Menengah">Menengah (Standar Mahasiswa)</option>
+                                <option value="Menengah">Menengah (Standar)</option>
                                 <option value="Mahir">Mahir (Teknik Kuliner Lengkap)</option>
                             </select>
                         </div>

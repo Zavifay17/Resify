@@ -34,7 +34,7 @@
             <div class="page-head-main">
                 <div class="page-head-meta">
                     <span class="eyebrow"><i data-lucide="refrigerator"></i> Manajemen Stok Dapur</span>
-                    <span class="chip chip-brand">Stok Kulkas &amp; Dapur Mahasiswa</span>
+                    <span class="chip chip-brand">Stok Kulkas &amp; Dapur Anda</span>
                     <span class="chip">Total: {{ $items->total() }} Bahan</span>
                 </div>
                 <h1>Manajemen Inventaris Dapur</h1>

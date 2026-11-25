@@ -193,15 +193,13 @@
                     <span class="text-sm">Bucket foto</span>
                     <span class="mono text-xs">{{ $supabaseBucket }}</span>
                 </div>
-                <div class="flex-between">
-                    <span class="text-sm">NIM</span>
-                    <span class="mono text-xs">{{ $studentNim }}</span>
-                </div>
             </div>
             <div class="card-foot flex-center flex-wrap">
                 <a href="#section-profil" class="text-sm">Profil</a>
                 <span class="text-muted">&middot;</span>
                 <a href="#section-gemini" class="text-sm">Gemini</a>
+                <span class="text-muted">&middot;</span>
+                <a href="#section-google" class="text-sm">Google</a>
                 <span class="text-muted">&middot;</span>
                 <a href="#section-supabase" class="text-sm">Supabase</a>
             </div>
@@ -228,26 +226,16 @@
                 <h2>Profil &amp; Preferensi</h2>
                 <span class="hint">Generator resep memakai data ini supaya saran masak sesuai kebiasaan Anda.</span>
             </div>
-            <span class="chip chip-brand">Akun mahasiswa</span>
+            <span class="chip chip-brand">Akun Anda</span>
         </div>
 
         <div class="card-body">
             <div class="grid grid-2">
                 <div class="field">
-                    <label class="label" for="profil_nama">Nama mahasiswa <span class="req">*</span></label>
+                    <label class="label" for="profil_nama">Nama lengkap <span class="req">*</span></label>
                     <input class="input" type="text" id="profil_nama" name="name"
                            value="{{ old('name', $user->name) }}" required>
                     @error('name')
-                        <div class="err">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="field">
-                    <label class="label" for="profil_nim">NIM</label>
-                    <input class="input mono" type="text" id="profil_nim" name="nim"
-                           value="{{ old('nim', $user->nim ?? $studentNim) }}" placeholder="12210889">
-                    <div class="hint">NIM ikut tercetak pada kop laporan inventaris.</div>
-                    @error('nim')
                         <div class="err">{{ $message }}</div>
                     @enderror
                 </div>
@@ -321,7 +309,7 @@
 
     {{-- ===================== Konfigurasi API ===================== --}}
     <form action="{{ route('settings.update') }}" method="POST" class="col gap-20"
-          onsubmit="['setting_gemini_key','setting_supabase_key'].forEach(function(id){var el=document.getElementById(id); if(!el.value) el.disabled=true;});">
+          onsubmit="['setting_gemini_key','setting_supabase_key','setting_google_id','setting_google_secret'].forEach(function(id){var el=document.getElementById(id); if(!el.value) el.disabled=true;});">
         @csrf
 
         <section class="card" id="section-gemini">
@@ -412,6 +400,70 @@
             </div>
         </section>
 
+        <section class="card" id="section-google">
+            <div class="card-head">
+                <div>
+                    <h2>Login Google</h2>
+                    <span class="hint">Pengguna bisa daftar dan masuk memakai akun Google; akun itu dicatat sistem sehingga kunjungan berikutnya tinggal klik sekali.</span>
+                </div>
+                @if ($googleSiap)
+                    <span class="chip chip-ok"><span class="dot dot-ok"></span> Aktif</span>
+                @else
+                    <span class="chip chip-warn"><span class="dot dot-warn"></span> Belum aktif</span>
+                @endif
+            </div>
+
+            <div class="card-body">
+                <div class="grid grid-2">
+                    <div class="field">
+                        <label class="label" for="setting_google_id">OAuth Client ID</label>
+                        <input class="input mono" type="text" id="setting_google_id" name="google_client_id"
+                               value="" autocomplete="off" placeholder="xxxx.apps.googleusercontent.com">
+                        <div class="hint">Kosongkan bila tidak diganti. Tersimpan di database, tidak ditulis ke file .env.</div>
+                        @error('google_client_id')
+                            <div class="err">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="setting_google_secret">OAuth Client Secret</label>
+                        <input class="input mono" type="password" id="setting_google_secret" name="google_client_secret"
+                               value="" autocomplete="off" placeholder="GOCSPX-...">
+                        <div class="hint">Sama seperti kunci lain: hanya diisi ulang, tidak dibaca balik.</div>
+                        @error('google_client_secret')
+                            <div class="err">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Authorized redirect URI di Google Cloud</label>
+                    <input class="input mono" type="text" readonly value="{{ $googleCallback }}"
+                           onclick="this.select()">
+                    <div class="hint">Tempel persis seperti ini pada <em>Authorized redirect URIs</em>, lalu simpan.
+                        Tombol Google langsung muncul di halaman Masuk &amp; Daftar tanpa perlu <span class="mono">php artisan config:clear</span>.</div>
+                </div>
+
+                <div class="alert alert-info mt-12">
+                    <i data-lucide="list-checks"></i>
+                    <div class="body">
+                        <strong>Cara membuat API-nya</strong>
+                        <ol class="text-sm mt-8 mb-0">
+                            <li>Buka <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console &rarr; APIs &amp; Services &rarr; Credentials</a>, pilih project Anda.</li>
+                            <li>Menu <em>Library</em> &rarr; cari <strong>Google Identity Platforms</strong> &rarr; <strong>Enable</strong> (opsional; OAuth dasar sudah cukup).</li>
+                            <li><em>OAuth consent screen</em> &rarr; pilih <strong>External</strong>, isi nama aplikasi dan email pendukung, tambahkan scope
+                                <span class="mono">openid</span>, <span class="mono">email</span>, <span class="mono">profile</span>, lalu <strong>Create</strong>.</li>
+                            <li>Selama status masih <em>Testing</em>, tambahkan alamat Gmail Anda pada <strong>Test users</strong> supaya tidak ditolak.</li>
+                            <li><em>Credentials</em> &rarr; <strong>Create Credentials &rarr; OAuth client ID</strong>, tipe <strong>Web application</strong>.</li>
+                            <li><em>Authorized JavaScript origins</em>: <span class="mono">{{ rtrim(url('/'), '/') }}</span></li>
+                            <li><em>Authorized redirect URIs</em>: <span class="mono">{{ $googleCallback }}</span> &rarr; <strong>Create</strong>.</li>
+                            <li>Salin <strong>Client ID</strong> dan <strong>Client Secret</strong> ke dua kolom di atas, klik <strong>Simpan konfigurasi API</strong>, lalu coba tombol Google di halaman Masuk.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="card" id="section-supabase">
             <div class="card-head">
                 <div>
@@ -455,15 +507,6 @@
                         @enderror
                     </div>
 
-                    <div class="field">
-                        <label class="label" for="setting_campus">Nama kampus pada laporan</label>
-                        <input class="input" type="text" id="setting_campus" name="campus_name"
-                               value="{{ old('campus_name', $campusName) }}">
-                        <div class="hint">Dipakai sebagai identitas pada dokumen laporan.</div>
-                        @error('campus_name')
-                            <div class="err">{{ $message }}</div>
-                        @enderror
-                    </div>
                 </div>
 
                 <div class="flex-between flex-wrap mt-8">
@@ -664,7 +707,7 @@
         <div class="card-body tight flex-between flex-wrap">
             <div>
                 <div class="strong">Perlu lampiran untuk laporan?</div>
-                <div class="text-sm text-muted">Cetak rekap stok berikut identitas mahasiswa sebagai bukti pengujian.</div>
+                <div class="text-sm text-muted">Cetak rekap stok dapur beserta identitas akun sebagai bukti pengujian.</div>
             </div>
             <a href="{{ route('inventory.print') }}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
                 <i data-lucide="printer"></i> Cetak laporan inventaris

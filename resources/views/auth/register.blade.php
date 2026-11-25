@@ -37,8 +37,8 @@
         </div>
 
         <div class="foot">
-            Tugas Akhir Program Studi Rekayasa Perangkat Lunak<br>
-            Universitas Bina Sarana Informatika (UBSI)
+            Sistem Inventaris Dapur &amp; Generator Resep Berbasis AI<br>
+            Bahan terpakai maksimal, sisa makanan minimal.
             <div class="credit">
                 Latar foto bahan masakan:
                 <a href="https://unsplash.com/@trapnation" target="_blank" rel="noopener">Andre Benz</a> / Unsplash, lisensi bebas.
@@ -66,7 +66,7 @@
                 <div class="field">
                     <label class="label" for="email">Email <span class="req">*</span></label>
                     <input type="email" id="email" name="email" class="input" required
-                        value="{{ old('email') }}" placeholder="nama@bsi.ac.id">
+                        value="{{ old('email') }}" placeholder="nama@email.com">
                     @error('email')
                         <div class="err">{{ $message }}</div>
                     @enderror
@@ -104,11 +104,6 @@
                     </svg>
                     <span>Daftar dengan Google</span>
                 </a>
-            @else
-                <div class="hint mt-16 mb-0 text-center">
-                    Akun Google tercatat otomatis sebagai akun Resepify setelah
-                    <span class="mono">GOOGLE_CLIENT_ID</span> dan <span class="mono">GOOGLE_CLIENT_SECRET</span> diisi di <span class="mono">.env</span>.
-                </div>
             @endif
 
             <p class="text-center text-sm text-muted mt-24 mb-0">

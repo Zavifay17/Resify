@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Laravel\Socialite\Facades\Socialite;
@@ -14,6 +15,8 @@ class AutentikasiGoogleTest extends TestCase
 
     private function isiKredensialGoogle(): void
     {
+        $this->hapusKredensialTersimpan();
+
         config([
             'services.google.client_id' => 'uji-uji-uji.apps.googleusercontent.com',
             'services.google.client_secret' => 'rahasia-uji',
@@ -23,10 +26,17 @@ class AutentikasiGoogleTest extends TestCase
 
     private function kosongkanKredensialGoogle(): void
     {
+        $this->hapusKredensialTersimpan();
+
         config([
             'services.google.client_id' => null,
             'services.google.client_secret' => null,
         ]);
+    }
+
+    private function hapusKredensialTersimpan(): void
+    {
+        SystemSetting::whereIn('key', ['google_client_id', 'google_client_secret'])->delete();
     }
 
     private function akunGoogle(string $id, string $email, string $nama): PenggunaSocialite
@@ -39,14 +49,25 @@ class AutentikasiGoogleTest extends TestCase
         ])->setRaw(['id' => $id, 'email' => $email]);
     }
 
-    public function test_halaman_daftar_tanpa_field_nim_dan_kampus(): void
+    public function test_halaman_daftar_memakai_wording_umum_tanpa_identitas_kampus(): void
     {
         $this->get(route('register'))->assertOk()
             ->assertDontSee('name="nim"', false)
             ->assertDontSee('name="campus"', false)
-            ->assertSee('Tugas Akhir Program Studi Rekayasa Perangkat Lunak', false)
-            ->assertSee('Universitas Bina Sarana Informatika (UBSI)', false)
+            ->assertDontSee('Universitas Bina Sarana Informatika', false)
+            ->assertDontSee('Tugas Akhir Program Studi', false)
+            ->assertDontSee('GOOGLE_CLIENT_ID', false)
+            ->assertSee('Sistem Inventaris Dapur &amp; Generator Resep Berbasis AI', false)
             ->assertSee('Mencatat stok dapur dan mendapat resep yang cocok dengan bahan yang Anda punya.', false);
+    }
+
+    public function test_halaman_masuk_tidak_menampilkan_identitas_kampus(): void
+    {
+        $this->get(route('login'))->assertOk()
+            ->assertDontSee('email kampus', false)
+            ->assertDontSee('bsi.ac.id', false)
+            ->assertDontSee('Universitas Bina Sarana Informatika', false)
+            ->assertSee('Pakai email Anda untuk lanjut ke dashboard.', false);
     }
 
     public function test_pendaftaran_manual_tidak_lagi_memakai_nim(): void
@@ -81,6 +102,26 @@ class AutentikasiGoogleTest extends TestCase
 
         $this->get(route('register'))->assertOk()->assertSee('btn-google-oauth', false);
         $this->get(route('login'))->assertOk()->assertSee('btn-google-oauth', false);
+    }
+
+    public function test_kredensial_google_yang_disimpan_lewat_pengaturan_langsung_aktif(): void
+    {
+        $this->kosongkanKredensialGoogle();
+
+        $this->actingAs(User::firstOrFail())->post(route('settings.update'), [
+            'gemini_model' => 'gemini-3.5-flash',
+            'google_client_id' => 'klien-pengaturan.apps.googleusercontent.com',
+            'google_client_secret' => 'rahasia-pengaturan',
+        ])->assertRedirect(route('settings.index'));
+
+        $this->assertSame('klien-pengaturan.apps.googleusercontent.com', SystemSetting::get('google_client_id'));
+
+        // tanpa menyentuh .env, tombol Google sudah muncul dan redirect memakai klien ini
+        $this->post(route('logout'));
+
+        $this->get(route('login'))->assertOk()->assertSee('btn-google-oauth', false);
+        $this->get(route('google.redirect'))
+            ->assertRedirectContains('client_id=klien-pengaturan.apps.googleusercontent.com');
     }
 
     public function test_alur_google_tidak_error_saat_belum_dikonfigurasi(): void

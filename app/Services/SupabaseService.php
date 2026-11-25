@@ -301,6 +301,7 @@ class SupabaseService
     /** Kunci SystemSetting yang tidak boleh ikut terkirim ke cloud. */
     protected const KUNCI_RAHASIA = [
         'gemini_api_key', 'supabase_key', 'supabase_service_key', 'supabase_access_token', 'app_key',
+        'google_client_id', 'google_client_secret',
     ];
 
     /** Kolom yang di MySQL tersimpan sebagai teks JSON, di cloud sebagai jsonb. */
@@ -536,7 +537,7 @@ class SupabaseService
     protected function definisiSinkronisasi(): array
     {
         return [
-            'users' => ['id', 'name', 'email', 'google_id', 'nim', 'campus', 'avatar', 'diet_preferences', 'cooking_skill', 'allergies', 'email_verified_at', 'created_at', 'updated_at'],
+            'users' => ['id', 'name', 'email', 'google_id', 'avatar', 'diet_preferences', 'cooking_skill', 'allergies', 'email_verified_at', 'created_at', 'updated_at'],
             'ingredients' => ['id', 'name', 'category', 'region_origin', 'default_unit', 'typical_shelf_life_days', 'calories_per_100g', 'icon', 'image_url', 'description', 'created_at', 'updated_at'],
             'ingredient_requests' => ['id', 'user_id', 'raw_input', 'image_path', 'supabase_image_url', 'source_type', 'detected_ingredients', 'created_at', 'updated_at'],
             'recipes_cache' => ['id', 'user_id', 'title', 'slug', 'description', 'cooking_time_minutes', 'difficulty', 'servings', 'cuisine_type', 'region', 'image_url', 'meal_type', 'ingredient_hash', 'used_ingredients', 'missing_ingredients', 'instructions', 'nutrition_facts', 'chef_tips', 'tags', 'source', 'is_demo_fallback', 'is_favorite', 'created_at', 'updated_at'],

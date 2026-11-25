@@ -110,7 +110,7 @@ class FetchRecipeImagesCommand extends Command
 
     private function hasilCommons(string $kata): array
     {
-        return Http::withHeaders(['User-Agent' => 'Resepify/1.0 (Tugas Akhir RPL Universitas BSI; kontak developer@resepify.test)'])
+        return Http::withHeaders(['User-Agent' => 'Resepify/1.0 (https://resepify.test; kontak developer@resepify.test)'])
             ->timeout(15)
             ->retry(2, 800, throw: false)
             ->get(self::API, [

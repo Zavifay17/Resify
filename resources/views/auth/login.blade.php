@@ -37,8 +37,8 @@
         </div>
 
         <div class="foot">
-            Tugas Akhir Program Studi Rekayasa Perangkat Lunak<br>
-            Universitas Bina Sarana Informatika (UBSI)
+            Sistem Inventaris Dapur &amp; Generator Resep Berbasis AI<br>
+            Bahan terpakai maksimal, sisa makanan minimal.
             <div class="credit">
                 Latar foto bahan masakan:
                 <a href="https://unsplash.com/@trapnation" target="_blank" rel="noopener">Andre Benz</a> / Unsplash, lisensi bebas.
@@ -49,7 +49,7 @@
     <div class="auth-main">
         <div class="auth-card">
             <h2>Masuk</h2>
-            <p class="text-muted text-sm">Pakai email kampus Anda untuk lanjut ke dashboard.</p>
+            <p class="text-muted text-sm">Pakai email Anda untuk lanjut ke dashboard.</p>
 
             <form action="{{ route('login.post') }}" method="POST" class="mt-24">
                 @csrf
@@ -57,7 +57,7 @@
                 <div class="field">
                     <label class="label" for="email">Email <span class="req">*</span></label>
                     <input type="email" id="email" name="email" class="input" required autofocus
-                        value="{{ old('email', 'mahasiswa@bsi.ac.id') }}" placeholder="nama@bsi.ac.id">
+                        value="{{ old('email') }}" placeholder="nama@email.com">
                     @error('email')
                         <div class="err">{{ $message }}</div>
                     @enderror
@@ -66,8 +66,8 @@
                 <div class="field">
                     <label class="label" for="password">Kata sandi <span class="req">*</span></label>
                     <input type="password" id="password" name="password" class="input" required
-                        value="password123" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
-                    <div class="hint">Akun demo: mahasiswa@bsi.ac.id / password123</div>
+                        placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
+                    <div class="hint">Belum punya akun? Pakai <strong>Login cepat</strong> untuk mencoba demo.</div>
                     @error('password')
                         <div class="err">{{ $message }}</div>
                     @enderror
@@ -97,11 +97,6 @@
                     </svg>
                     <span>Masuk dengan Google</span>
                 </a>
-            @else
-                <div class="hint mt-16 mb-0 text-center">
-                    Masuk dengan akun Google aktif setelah
-                    <span class="mono">GOOGLE_CLIENT_ID</span> dan <span class="mono">GOOGLE_CLIENT_SECRET</span> diisi di <span class="mono">.env</span>.
-                </div>
             @endif
 
             <div class="divider-label">atau login demo</div>

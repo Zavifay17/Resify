@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Inventaris Dapur - Tugas Akhir Program Studi Rekayasa Perangkat Lunak UBSI</title>
+    <title>Laporan Inventaris Dapur - Resepify</title>
     <style>
         /* Dokumen cetak laporan inventaris - ditulis manual, tanpa framework. */
         * { box-sizing: border-box; }
@@ -193,18 +193,18 @@
 
     <main class="lembar">
 
-        <!-- Kop surat akademik -->
+        <!-- Kop dokumen -->
         <header class="kop">
             <div class="kop-kiri">
-                <span class="lencana">BSI</span>
+                <span class="lencana">R</span>
                 <div>
-                    <h2>Universitas Bina Sarana Informatika</h2>
-                    <p class="prodi">FAKULTAS TEKNIK &amp; INFORMATIKA &bull; PROGRAM STUDI REKAYASA PERANGKAT LUNAK</p>
-                    <p class="sistem">Sistem Resepify: Manajemen Inventaris Dapur Cerdas Berbasis Kecerdasan Buatan</p>
+                    <h2>Resepify</h2>
+                    <p class="prodi">SISTEM INVENTARIS DAPUR &amp; GENERATOR RESEP BERBASIS AI</p>
+                    <p class="sistem">Mencatat stok dapur, mendeteksi kedaluwarsa, dan menyusun resep dari bahan yang tersedia</p>
                 </div>
             </div>
             <div class="kop-kanan">
-                <p class="nomor">Form: TA-RPL-AI-01</p>
+                <p class="nomor">Form: RSP-INV-01</p>
                 <p>Tgl Cetak: {{ date('d F Y') }}</p>
             </div>
         </header>
@@ -212,12 +212,12 @@
         <h1 class="judul-laporan">Laporan Inventarisasi Bahan Makanan Dapur</h1>
         <p class="sub-judul">Dokumen Bukti Pengujian Sistem Smart Expiration &amp; Hybrid Database</p>
 
-        <!-- Data mahasiswa & ringkasan stok -->
+        <!-- Data akun & ringkasan stok -->
         <section class="kotak-data">
             <div>
-                <p><strong>Nama Mahasiswa:</strong> {{ $user->name }}</p>
-                <p><strong>NIM:</strong> {{ $user->nim ?? '12210889' }}</p>
-                <p><strong>Program Studi:</strong> Rekayasa Perangkat Lunak (RPL)</p>
+                <p><strong>Nama:</strong> {{ $user->name }}</p>
+                <p><strong>Email:</strong> {{ $user->email }}</p>
+                <p><strong>Terdaftar sejak:</strong> {{ optional($user->created_at)->format('d F Y') ?? date('d F Y') }}</p>
             </div>
             <div>
                 <p><strong>Total Stok Aktif Terdaftar:</strong> {{ $items->count() }} Komoditas</p>
@@ -268,21 +268,21 @@
             </table>
         </div>
 
-        <!-- Tanda tangan -->
+        <!-- Pengesahan dokumen -->
         <section class="ttd">
             <div>
-                <p>Mengetahui,</p>
-                <p class="jabatan">Dosen Pembimbing Tugas Akhir</p>
+                <p>Dokumen dihasilkan otomatis oleh,</p>
+                <p class="jabatan">Sistem Inventaris Resepify</p>
                 <div class="ruang"></div>
-                <p class="nama-ttd">(........................................................)</p>
-                <p class="ket">NIDN. ........................................</p>
+                <p class="nama-ttd">(Resepify)</p>
+                <p class="ket">Waktu cetak: {{ date('H:i') }} WIB</p>
             </div>
             <div>
-                <p>Jakarta, {{ date('d F Y') }}</p>
-                <p class="jabatan">Mahasiswa Pengembang</p>
+                <p>{{ date('d F Y') }}</p>
+                <p class="jabatan">Pemilik Dapur</p>
                 <div class="ruang"></div>
                 <p class="nama-ttd">({{ $user->name }})</p>
-                <p class="ket">NIM. {{ $user->nim ?? '12210889' }}</p>
+                <p class="ket">{{ $user->email }}</p>
             </div>
         </section>
 

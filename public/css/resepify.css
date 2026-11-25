@@ -518,6 +518,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
 .alert-warn { background: var(--warn-soft); border-color: #f3ddb8; color: #7c4a06; }
 .alert-danger { background: var(--danger-soft); border-color: #f4cccc; color: #7f1d1d; }
 .alert-info { background: var(--info-soft); border-color: #ccd9f8; color: #1e3a8a; }
+.alert ol { padding-left: 20px; display: grid; gap: 6px; }
+.alert ol li::marker { font-weight: 650; }
 
 /* ------------------------------------------------------------------ tabs */
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 18px; overflow-x: auto; }

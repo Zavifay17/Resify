@@ -17,15 +17,13 @@
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
--- 1. users (identitas mahasiswa; kolom rahasia tidak dicerminkan ke cloud)
+-- 1. users (identitas pengguna; kolom rahasia tidak dicerminkan ke cloud)
 -- ---------------------------------------------------------------------------
 create table if not exists public.users (
     id                bigint primary key,
     name              text not null,
     email             text not null unique,
     google_id         varchar(64),
-    nim               varchar(20),
-    campus            text not null default 'Universitas Bina Sarana Informatika',
     avatar            text,
     diet_preferences  jsonb,
     cooking_skill     text not null default 'Menengah',
