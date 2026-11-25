@@ -47,6 +47,10 @@ buka **Pengaturan → Login Google**, tempel *Client ID* dan *Client Secret*, kl
 **Simpan konfigurasi API**. Nilai disimpan di tabel `system_settings` dan langsung
 dipakai; tombol Google muncul seketika di halaman Masuk & Daftar.
 
+> *Client ID* selalu berbentuk `angka-karakter.apps.googleusercontent.com` dan
+> *Client Secret* selalu diawali `GOCSPX-`. Kolom ini bukan untuk alamat email atau
+> kata sandi — nilai yang tidak cocok bentuknya diabaikan dan sistem memakai `.env`.
+
 **Cara 2 — lewat `.env`:**
 
 ```dotenv
