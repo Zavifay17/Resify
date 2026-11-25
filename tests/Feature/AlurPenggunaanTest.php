@@ -124,10 +124,16 @@ class AlurPenggunaanTest extends TestCase
     public function test_bahan_arsip_masih_terlihat_di_daftar_inventaris(): void
     {
         $this->tambahBahan('Ubi Uji Arsip', now()->subDays(4));
-        $this->get(route('inventory.index'))->assertSee('Ubi Uji Arsip', false)->assertSee('Diarsipkan', false);
+        $cari = ['q' => 'Ubi Uji Arsip'];
 
-        $this->get(route('inventory.index', ['status' => 'archived']))->assertSee('Ubi Uji Arsip', false);
-        $this->get(route('inventory.index', ['status' => 'active']))->assertDontSee('Ubi Uji Arsip', false);
+        // Bahan arsip tetap ditampilkan (ditaruh di halaman belakang daftar), tidak dihapus
+        $this->get(route('inventory.index', $cari))->assertSee('Ubi Uji Arsip', false)->assertSee('Diarsipkan', false);
+
+        $this->get(route('inventory.index', $cari + ['status' => 'archived']))->assertSee('Ubi Uji Arsip', false);
+
+        // Penyaring "hanya aktif" menghapusnya dari daftar (kata pada ?q= masih tercetak di kolom pencarian)
+        $this->assertNull(KitchenInventory::active()->where('item_name', 'Ubi Uji Arsip')->first());
+        $this->assertNotNull(KitchenInventory::archived()->where('item_name', 'Ubi Uji Arsip')->first());
     }
 
     public function test_memperbarui_tanggal_bahan_arsip_aktifkan_kembali(): void

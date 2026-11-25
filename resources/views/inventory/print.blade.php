@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Inventaris Dapur - Tugas Akhir RPL BSI</title>
+    <title>Laporan Inventaris Dapur - Tugas Akhir Program Studi Rekayasa Perangkat Lunak UBSI</title>
     <style>
         /* Dokumen cetak laporan inventaris - ditulis manual, tanpa framework. */
         * { box-sizing: border-box; }

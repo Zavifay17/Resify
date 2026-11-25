@@ -23,6 +23,10 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Google OAuth Routes
+Route::get('/auth/google', [AuthController::class, 'googleRedirect'])->name('google.redirect');
+Route::get('/auth/google/callback', [AuthController::class, 'googleCallback'])->name('google.callback');
+
 // Rute Terproteksi (Login Required)
 Route::middleware('auth')->group(function () {
     // 1. Dashboard Utama & Metrik

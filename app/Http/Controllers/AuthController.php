@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -14,7 +15,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
-        return view('auth.login');
+        return view('auth.login', ['googleSiap' => $this->googleSiap()]);
     }
 
     public function login(Request $request)
@@ -49,7 +50,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
-        return view('auth.register');
+        return view('auth.register', ['googleSiap' => $this->googleSiap()]);
     }
 
     public function register(Request $request)
@@ -58,16 +59,12 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'nim' => 'nullable|string|max:20',
-            'campus' => 'nullable|string|max:100',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'nim' => $validated['nim'] ?? '12210889',
-            'campus' => $validated['campus'] ?? 'Universitas Bina Sarana Informatika',
             'diet_preferences' => ['Halal', 'Seimbang'],
             'cooking_skill' => 'Menengah',
         ]);
@@ -75,6 +72,103 @@ class AuthController extends Controller
         Auth::login($user);
         return redirect()->route('dashboard')->with('success', 'Pendaftaran berhasil! Selamat datang di Resepify.');
     }
+
+    // ===== Google OAuth =====
+
+    /**
+     * Kredensial Google dianggap siap bila Client ID dan Secret sudah diisi.
+     */
+    public function googleSiap(): bool
+    {
+        return filled(config('services.google.client_id')) && filled(config('services.google.client_secret'));
+    }
+
+    /**
+     * URI callback dipakai otomatis bila GOOGLE_REDIRECT_URI belum diisi,
+     * selama masih sama dengan yang didaftarkan di Google Cloud Console.
+     */
+    private function callbackGoogle(): string
+    {
+        return (string) (config('services.google.redirect') ?: url('/auth/google/callback'));
+    }
+
+    /**
+     * Arahkan pengguna ke halaman autentikasi Google.
+     */
+    public function googleRedirect()
+    {
+        if (!$this->googleSiap()) {
+            return redirect()->route('login')->with('error', 'Login Google belum aktif. Isi GOOGLE_CLIENT_ID dan GOOGLE_CLIENT_SECRET di berkas .env, lalu jalankan php artisan config:clear.');
+        }
+
+        try {
+            return Socialite::driver('google')
+                ->scopes(['openid', 'email', 'profile'])
+                ->redirectUrl($this->callbackGoogle())
+                ->redirect();
+        } catch (\Throwable $e) {
+            return redirect()->route('login')->with('error', 'Google sedang tidak dapat dihubungi. Silakan masuk dengan email atau ulangi beberapa saat lagi.');
+        }
+    }
+
+    /**
+     * Tangani callback dari Google setelah pengguna menyetujui akses.
+     */
+    public function googleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')
+                ->scopes(['openid', 'email', 'profile'])
+                ->redirectUrl($this->callbackGoogle())
+                ->user();
+        } catch (\Throwable $e) {
+            return redirect()->route('login')->with('error', 'Gagal masuk dengan Google. Silakan coba lagi.');
+        }
+
+        $email = $googleUser->getEmail();
+
+        if (!$email) {
+            return redirect()->route('login')->with('error', 'Akun Google tersebut tidak membagikan alamat email, jadi sistem tidak dapat mencocokkan datanya.');
+        }
+
+        // Cari user berdasarkan google_id atau email
+        $user = User::where('google_id', $googleUser->getId())
+                    ->orWhere('email', $email)
+                    ->first();
+
+        if ($user) {
+            $perbarui = [];
+
+            // Tautkan google_id pada akun yang sebelumnya mendaftar manual
+            if (!$user->google_id) {
+                $perbarui['google_id'] = $googleUser->getId();
+            }
+
+            if (!$user->avatar && $googleUser->getAvatar()) {
+                $perbarui['avatar'] = $googleUser->getAvatar();
+            }
+
+            if ($perbarui !== []) {
+                $user->update($perbarui);
+            }
+        } else {
+            // Buat akun baru dari data Google
+            $user = User::create([
+                'name'             => $googleUser->getName() ?: $email,
+                'email'            => $email,
+                'google_id'        => $googleUser->getId(),
+                'avatar'           => $googleUser->getAvatar(),
+                'password'         => null,
+                'diet_preferences' => ['Halal', 'Seimbang'],
+                'cooking_skill'    => 'Menengah',
+            ]);
+        }
+
+        Auth::login($user, true);
+        return redirect()->route('dashboard')->with('success', 'Selamat datang, ' . $user->name . '! Anda berhasil masuk dengan akun Google.');
+    }
+
+    // ===== Logout =====
 
     public function logout(Request $request)
     {

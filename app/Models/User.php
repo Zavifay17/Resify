@@ -21,6 +21,7 @@ class User extends Authenticatable
         'diet_preferences',
         'cooking_skill',
         'allergies',
+        'google_id',
     ];
 
     protected $hidden = [

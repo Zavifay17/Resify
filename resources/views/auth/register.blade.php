@@ -13,8 +13,7 @@
 
             <h1>Kelola dapur tanpa bahan terbuang</h1>
             <p class="mt-16">
-                Daftar untuk mulai mencatat stok dapur dan mendapat resep yang cocok
-                dengan bahan yang Anda punya.
+                Mencatat stok dapur dan mendapat resep yang cocok dengan bahan yang Anda punya.
             </p>
 
             <ul class="mt-24">
@@ -38,14 +37,15 @@
         </div>
 
         <div class="foot">
-            Tugas Akhir RPL &mdash; Universitas Bina Sarana Informatika
+            Tugas Akhir Program Studi Rekayasa Perangkat Lunak<br>
+            Universitas Bina Sarana Informatika (UBSI)
         </div>
     </aside>
 
     <div class="auth-main">
         <div class="auth-card">
             <h2>Daftar akun baru</h2>
-            <p class="text-muted text-sm">Isian NIM dan kampus boleh dikosongkan.</p>
+            <p class="text-muted text-sm">Isi nama, email, dan kata sandi untuk mulai memakai Resepify.</p>
 
             <form action="{{ route('register.post') }}" method="POST" class="mt-24">
                 @csrf
@@ -57,25 +57,6 @@
                     @error('name')
                         <div class="err">{{ $message }}</div>
                     @enderror
-                </div>
-
-                <div class="grid grid-2">
-                    <div class="field">
-                        <label class="label" for="nim">NIM</label>
-                        <input type="text" id="nim" name="nim" class="input"
-                            value="{{ old('nim') }}" placeholder="12210889">
-                        @error('nim')
-                            <div class="err">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="field">
-                        <label class="label" for="campus">Kampus</label>
-                        <input type="text" id="campus" name="campus" class="input"
-                            value="{{ old('campus', 'Universitas BSI') }}" placeholder="Universitas BSI">
-                        @error('campus')
-                            <div class="err">{{ $message }}</div>
-                        @enderror
-                    </div>
                 </div>
 
                 <div class="field">
@@ -106,6 +87,25 @@
                     <i data-lucide="user-plus"></i> Daftar
                 </button>
             </form>
+
+            @if($googleSiap)
+                <div class="divider-label mt-16">atau daftar dengan</div>
+
+                <a href="{{ route('google.redirect') }}" class="btn-google-oauth">
+                    <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    <span>Daftar dengan Google</span>
+                </a>
+            @else
+                <div class="hint mt-16 mb-0 text-center">
+                    Akun Google tercatat otomatis sebagai akun Resepify setelah
+                    <span class="mono">GOOGLE_CLIENT_ID</span> dan <span class="mono">GOOGLE_CLIENT_SECRET</span> diisi di <span class="mono">.env</span>.
+                </div>
+            @endif
 
             <p class="text-center text-sm text-muted mt-24 mb-0">
                 Sudah punya akun? <a href="{{ route('login') }}">Masuk</a>
