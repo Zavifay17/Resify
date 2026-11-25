@@ -58,4 +58,44 @@ class AnimasiLoadingAiTest extends TestCase
             ->assertSee('Gemini AI Menalar Bahan Pengganti')
             ->assertSee('ai-wait ringkas', false);
     }
+
+    public function test_pengatur_progres_realtime_dimuat_dan_terikat_ke_setiap_permintaan_ai(): void
+    {
+        $this->get('/vision')
+            ->assertOk()
+            ->assertSee('js/ai-wait.js', false)
+            ->assertSee('data-ai-wait="deteksi"', false)
+            ->assertSee('data-ai-titik="deteksi"', false)
+            ->assertSee("AiTunggu?.jalankan('deteksi'", false)
+            ->assertSee("AiTunggu?.geser('deteksi', 0.82", false)
+            ->assertSee("AiTunggu?.selesai('deteksi')", false)
+            ->assertSee("AiTunggu?.gagal('deteksi')", false);
+
+        $this->get('/recipes/generator')
+            ->assertOk()
+            ->assertSee('data-ai-wait="racik"', false)
+            ->assertSee('data-ai-wait="ganti"', false)
+            ->assertSee("AiTunggu?.jalankan('racik'", false)
+            ->assertSee("AiTunggu?.jalankan('ganti'", false);
+
+        $resep = RecipeCache::query()->firstOrFail();
+        $this->get(route('recipes.show', $resep->id))
+            ->assertOk()
+            ->assertSee("AiTunggu?.jalankan('ganti'", false);
+
+        $this->get('/settings')
+            ->assertOk()
+            ->assertSee('data-ai-titik="kunci"', false)
+            ->assertSee("AiTunggu?.jalankan('kunci'", false);
+    }
+
+    public function test_animator_mempunyai_kait_progres_realtime(): void
+    {
+        $isi = file_get_contents(base_path('public/js/ai-wait.js'));
+
+        $this->assertNotFalse($isi);
+        foreach (['window.AiTunggu', 'data-ai-bar', 'data-ai-jam', 'data-ai-fase', 'data-ai-langkah', 'is-nyala'] as $pengait) {
+            $this->assertStringContainsString($pengait, $isi);
+        }
+    }
 }

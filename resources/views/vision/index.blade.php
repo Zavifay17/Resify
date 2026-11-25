@@ -207,6 +207,11 @@
         this.detectedItems = [];
         this.summary = '';
 
+        window.AiTunggu?.jalankan('deteksi', {
+            estimasi: 12000,
+            fase: 'Menyiapkan berkas foto...',
+        });
+
         const formData = new FormData();
 
         if (this.capturedImage) {
@@ -217,6 +222,8 @@
             formData.append('sample', this.selectedSample);
         }
 
+        window.AiTunggu?.geser('deteksi', 0.14, 'Foto terkirim, Gemini mengenali tiap bahan...');
+
         fetch('{{ route('vision.analyze') }}', {
             method: 'POST',
             headers: {
@@ -224,10 +231,14 @@
             },
             body: formData
         })
-        .then(res => res.json())
+        .then((res) => {
+            window.AiTunggu?.geser('deteksi', 0.82, 'Jawaban AI tiba, hasil sedang disusun...');
+            return res.json();
+        })
         .then(res => {
             this.loading = false;
             if (res.success && res.data) {
+                window.AiTunggu?.selesai('deteksi');
                 this.detectedItems = res.data.detected_items || [];
                 this.summary = res.data.summary || '';
                 this.latency = res.latency_ms || 0;
@@ -244,6 +255,7 @@
                     });
                 }
             } else {
+                window.AiTunggu?.gagal('deteksi');
                 Swal.fire({
                     icon: 'error',
                     title: 'Pemindaian Gagal',
@@ -255,6 +267,7 @@
         })
         .catch(err => {
             this.loading = false;
+            window.AiTunggu?.gagal('deteksi');
             console.error(err);
             Swal.fire({
                 icon: 'error',
@@ -352,7 +365,7 @@
                                     <span>Pindai Foto AI</span>
                                 </span>
                                 <span x-show="loading" class="flex-center gap-6">
-                                    <span class="ai-titik"><i></i><i></i><i></i></span>
+                                    <span class="ai-titik" data-ai-titik="deteksi"><i></i><i></i><i></i></span>
                                     <span>Menganalisis...</span>
                                 </span>
                             </button>
@@ -400,7 +413,7 @@
                             <span>Pindai Foto dengan AI</span>
                         </span>
                         <span x-show="loading" class="flex-center gap-8">
-                            <span class="ai-titik"><i></i><i></i><i></i></span>
+                            <span class="ai-titik" data-ai-titik="deteksi"><i></i><i></i><i></i></span>
                             <span>Memindai Objek Bahan...</span>
                         </span>
                     </button>
@@ -424,6 +437,7 @@
             {{-- Kondisi 2: Sedang Memproses --}}
             <div x-show="loading" class="card">
                 @include('partials.ai-wait', [
+                    'id' => 'deteksi',
                     'judul' => 'AI Sedang Mengenali Bahan Makanan',
                     'langkah' => [
                         'Membaca foto ke dalam memori aman',

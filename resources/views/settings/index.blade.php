@@ -54,6 +54,8 @@
         this.testingGemini = true;
         this.geminiResult = null;
 
+        window.AiTunggu?.jalankan('kunci', { estimasi: 12000 });
+
         fetch('{{ route('settings.test-gemini') }}', {
             method: 'POST',
             headers: {
@@ -62,14 +64,19 @@
             },
             body: JSON.stringify({ api_key: keyBaru.length >= 30 ? keyBaru : null, model: model })
         })
-        .then(res => res.json())
+        .then((res) => {
+            window.AiTunggu?.geser('kunci', 0.85);
+            return res.json();
+        })
         .then(res => {
             this.testingGemini = false;
             this.geminiResult = res;
+            window.AiTunggu?.selesai('kunci');
         })
         .catch(err => {
             this.testingGemini = false;
             this.geminiResult = { success: false, message: 'Gagal menghubungi server lokal.' };
+            window.AiTunggu?.gagal('kunci');
         });
     },
 
@@ -386,8 +393,8 @@
                         </template>
                         <template x-if="testingGemini">
                             <span class="flex-center gap-4">
-                                <span class="spinner" style="border-color:#cfd6dd;border-top-color:var(--brand)"></span>
-                                Menghubungi Google AI Studio...
+                                <span class="ai-titik" data-ai-titik="kunci"><i></i><i></i><i></i></span>
+                                Menghubungi Google AI Studio<span class="ai-jam" data-ai-jam></span>
                             </span>
                         </template>
                     </button>

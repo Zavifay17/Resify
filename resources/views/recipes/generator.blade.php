@@ -57,6 +57,13 @@
         this.generatedRecipe = null;
         this.cacheInfo = null;
 
+        window.AiTunggu?.jalankan('racik', {
+            estimasi: 15000,
+            fase: 'Merapikan bahan pilihan ke dalam permintaan...',
+        });
+
+        window.AiTunggu?.geser('racik', 0.16, 'Permintaan dikirim ke Gemini...');
+
         fetch('{{ route('recipes.generate') }}', {
             method: 'POST',
             headers: {
@@ -72,10 +79,14 @@
                 diet: this.dietPreferences
             })
         })
-        .then(res => res.json())
+        .then((res) => {
+            window.AiTunggu?.geser('racik', 0.84, 'Resep dari AI tiba, tampilan sedang disusun...');
+            return res.json();
+        })
         .then(res => {
             this.loading = false;
             if (res.success && res.recipe) {
+                window.AiTunggu?.selesai('racik');
                 this.generatedRecipe = res.recipe;
                 this.cacheInfo = {
                     from_cache: res.from_cache,
@@ -89,6 +100,7 @@
                     document.getElementById('recipe_result_section')?.scrollIntoView({ behavior: 'smooth' });
                 });
             } else {
+                window.AiTunggu?.gagal('racik');
                 Swal.fire({
                     icon: 'error',
                     title: 'Gagal Menyusun Resep',
@@ -100,6 +112,7 @@
         })
         .catch(err => {
             this.loading = false;
+            window.AiTunggu?.gagal('racik');
             console.error(err);
             Swal.fire({
                 icon: 'error',
@@ -117,6 +130,11 @@
         this.substituteLoading = true;
         this.substituteModal = true;
 
+        window.AiTunggu?.jalankan('ganti', {
+            estimasi: 10000,
+            fase: 'Memeriksa ketersediaan bahan di pasar...',
+        });
+
         fetch('{{ route('substitute.suggest') }}', {
             method: 'POST',
             headers: {
@@ -128,15 +146,22 @@
                 recipe_context: this.generatedRecipe?.title || 'Masakan Rumahan'
             })
         })
-        .then(res => res.json())
+        .then((res) => {
+            window.AiTunggu?.geser('ganti', 0.8, 'AI menjawab, rasio takaran sedang dihitung...');
+            return res.json();
+        })
         .then(res => {
             this.substituteLoading = false;
             if (res.success && res.data) {
+                window.AiTunggu?.selesai('ganti');
                 this.substituteResult = res.data;
+            } else {
+                window.AiTunggu?.gagal('ganti');
             }
         })
         .catch(err => {
             this.substituteLoading = false;
+            window.AiTunggu?.gagal('ganti');
             console.error(err);
         });
     }
@@ -297,7 +322,7 @@
                         </template>
                         <template x-if="loading">
                             <span class="flex-center" style="justify-content:center">
-                                <span class="ai-titik"><i></i><i></i><i></i></span>
+                                <span class="ai-titik" data-ai-titik="racik"><i></i><i></i><i></i></span>
                                 <span>Gemini AI Sedang Meracik Resep &amp; Mengestimasi Nutrisi...</span>
                             </span>
                         </template>
@@ -310,6 +335,7 @@
     <!-- Step 2b: Panel saat Gemini AI sedang meracik -->
     <div x-show="loading" x-cloak class="card" style="margin-top:18px">
         @include('partials.ai-wait', [
+            'id' => 'racik',
             'judul' => 'Gemini AI Sedang Meracik Resepmu',
             'langkah' => [
                 'Memilih bahan terbaik dari kulkas',
@@ -500,6 +526,7 @@
                 <!-- Loading State -->
                 <div x-show="substituteLoading">
                     @include('partials.ai-wait', [
+                        'id' => 'ganti',
                         'ringkas' => true,
                         'judul' => 'Gemini AI Mencari Bahan Pengganti',
                         'langkah' => [

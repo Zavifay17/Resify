@@ -49,6 +49,11 @@
         this.substituteLoading = true;
         this.substituteModal = true;
 
+        window.AiTunggu?.jalankan('ganti', {
+            estimasi: 10000,
+            fase: 'Memeriksa sifat bahan yang hilang...',
+        });
+
         fetch('{{ route('substitute.suggest') }}', {
             method: 'POST',
             headers: {
@@ -61,15 +66,22 @@
                 recipe_id: {{ $recipe->id }}
             })
         })
-        .then(res => res.json())
+        .then((res) => {
+            window.AiTunggu?.geser('ganti', 0.8, 'AI menjawab, rasio takaran sedang dihitung...');
+            return res.json();
+        })
         .then(res => {
             this.substituteLoading = false;
             if (res.success && res.data) {
+                window.AiTunggu?.selesai('ganti');
                 this.substituteResult = res.data;
+            } else {
+                window.AiTunggu?.gagal('ganti');
             }
         })
         .catch(err => {
             this.substituteLoading = false;
+            window.AiTunggu?.gagal('ganti');
             console.error(err);
         });
     }
@@ -311,6 +323,7 @@
                 <!-- Jawaban AI masih dimuat -->
                 <div x-show="substituteLoading">
                     @include('partials.ai-wait', [
+                        'id' => 'ganti',
                         'ringkas' => true,
                         'judul' => 'Gemini AI Menalar Bahan Pengganti',
                         'langkah' => [
