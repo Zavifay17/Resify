@@ -14,10 +14,12 @@ use Illuminate\Support\Str;
 class RecipeService
 {
     protected GeminiService $geminiService;
+    protected HidanganFotoService $fotoService;
 
-    public function __construct(GeminiService $geminiService)
+    public function __construct(GeminiService $geminiService, HidanganFotoService $fotoService)
     {
         $this->geminiService = $geminiService;
+        $this->fotoService = $fotoService;
     }
 
     /**
@@ -45,26 +47,36 @@ class RecipeService
         // 1. Cek Caching Tingkat 1: Laravel Memory/File Cache (Super Cepat ~5ms)
         if (Cache::has($cacheKey)) {
             $cachedData = Cache::get($cacheKey);
-            return [
-                'success' => true,
-                'recipe' => $cachedData,
-                'from_cache' => true,
-                'cache_level' => 'Laravel Memory Cache (L1)',
-                'latency_ms' => 6,
-                'saved_tokens' => true
-            ];
+
+            if (!empty($cachedData['image_url'])) {
+                return [
+                    'success' => true,
+                    'recipe' => $cachedData,
+                    'from_cache' => true,
+                    'cache_level' => 'Laravel Memory Cache (L1)',
+                    'latency_ms' => 6,
+                    'saved_tokens' => true
+                ];
+            }
+
+            // Entri lama tanpa foto dibuang agar diambil ulang beserta fotonya
+            Cache::forget($cacheKey);
         }
 
         // 2. Cek Caching Tingkat 2: MySQL recipes_cache Table (~15ms)
         $dbCached = RecipeCache::where('ingredient_hash', $ingredientHash)->first();
         if ($dbCached) {
+            $mulai = microtime(true);
+            $this->lengkapiFoto($dbCached);
+            $fotoMs = (int) round((microtime(true) - $mulai) * 1000);
+
             Cache::put($cacheKey, $dbCached->toArray(), now()->addDays(7));
             return [
                 'success' => true,
                 'recipe' => $dbCached->toArray(),
                 'from_cache' => true,
                 'cache_level' => 'MySQL recipes_cache (L2 Database)',
-                'latency_ms' => 18,
+                'latency_ms' => 18 + $fotoMs,
                 'saved_tokens' => true
             ];
         }
@@ -98,9 +110,12 @@ class RecipeService
             'instructions' => $recipeData['instructions'] ?? [],
             'nutrition_facts' => $recipeData['nutrition_facts'] ?? null,
             'chef_tips' => $recipeData['chef_tips'] ?? null,
+            'image_url' => $recipeData['image_url'] ?? null,
             'source' => $aiResult['is_simulated'] ? 'simulated_ai' : 'gemini_api',
             'is_favorite' => false,
         ]);
+
+        $this->lengkapiFoto($newRecipe);
 
         // Simpan ke Cache L1
         Cache::put($cacheKey, $newRecipe->toArray(), now()->addDays(7));
@@ -115,6 +130,23 @@ class RecipeService
             'is_simulated' => $aiResult['is_simulated'] ?? false,
             'notice' => $aiResult['notice'] ?? null
         ];
+    }
+
+    /**
+     * Pasang foto hidangan open-source pada resep yang belum punya gambar.
+     * Gagal cari foto tidak boleh gagalkan GENERATE AI: placeholder tetap dipakai.
+     */
+    private function lengkapiFoto(RecipeCache $resep): void
+    {
+        if (!empty($resep->image_url)) {
+            return;
+        }
+
+        try {
+            $this->fotoService->pasang($resep, 8);
+        } catch (\Throwable) {
+            // Foto adalah pelengkap, bukan syarat berhasilnya generator
+        }
     }
 }
 

@@ -141,7 +141,8 @@
         </div>
 
         <div class="photo">
-            <img src="{{ $recipe->photo }}" alt="{{ $recipe->title }}">
+            <img src="{{ $recipe->photo }}" alt="{{ $recipe->title }}"
+                 onerror="this.onerror=null;this.src='{{ asset('images/katalog/default-nusantara.svg') }}'">
         </div>
     </div>
 

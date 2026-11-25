@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\KitchenInventory;
 use App\Models\RecipeCache;
 use App\Services\GeminiService;
+use App\Services\HidanganFotoService;
 use App\Services\InventoryService;
 use App\Services\RecipeService;
 use Carbon\Carbon;
@@ -17,15 +18,18 @@ class RecipeController extends Controller
     protected RecipeService $recipeService;
     protected GeminiService $geminiService;
     protected InventoryService $inventoryService;
+    protected HidanganFotoService $fotoService;
 
     public function __construct(
         RecipeService $recipeService,
         GeminiService $geminiService,
-        InventoryService $inventoryService
+        InventoryService $inventoryService,
+        HidanganFotoService $fotoService
     ) {
         $this->recipeService = $recipeService;
         $this->geminiService = $geminiService;
         $this->inventoryService = $inventoryService;
+        $this->fotoService = $fotoService;
     }
 
     /**
@@ -255,6 +259,8 @@ class RecipeController extends Controller
             'source' => 'zero_waste_rescue_ai',
             'is_favorite' => true,
         ]);
+
+        $this->fotoService->pasang($savedRecipe, 6);
 
         return redirect()->route('recipes.show', $savedRecipe->id)
             ->with('success', "🎉 Berhasil menyusun resep penyelamat \"{$savedRecipe->title}\" untuk mencegah bahan makanan terbuang!");

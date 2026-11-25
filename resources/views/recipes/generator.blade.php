@@ -361,6 +361,12 @@
                 <!-- Recipe Header Card -->
                 <div class="recipe-hero">
                     <div class="stack-12">
+                        <div class="photo">
+                            <img :src="generatedRecipe?.image_url || '{{ asset('images/katalog/default-nusantara.svg') }}'"
+                                 :alt="generatedRecipe?.title || 'Foto Hidangan'" loading="lazy"
+                                 x-on:error.once="$event.target.src = '{{ asset('images/katalog/default-nusantara.svg') }}'">
+                        </div>
+
                         <div class="flex-wrap gap-8">
                             <span class="chip chip-brand" x-text="generatedRecipe?.cuisine_type"></span>
                             <span class="chip chip-warn" x-text="generatedRecipe?.meal_type"></span>

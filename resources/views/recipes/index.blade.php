@@ -85,7 +85,8 @@
                     @forelse($recipes as $recipe)
                         <article class="dish">
                             <div class="dish-photo">
-                                <img src="{{ $recipe->photo }}" alt="{{ $recipe->title }}" loading="lazy">
+                                <img src="{{ $recipe->photo }}" alt="{{ $recipe->title }}" loading="lazy"
+                                     onerror="this.onerror=null;this.src='{{ asset('images/katalog/default-nusantara.svg') }}'">
                                 <span class="chip chip-brand tag-corner">{{ $recipe->cuisine_type }}</span>
                             </div>
 

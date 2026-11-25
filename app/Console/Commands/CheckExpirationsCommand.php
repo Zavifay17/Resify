@@ -6,6 +6,7 @@ use App\Models\KitchenInventory;
 use App\Models\RecipeCache;
 use App\Models\User;
 use App\Services\GeminiService;
+use App\Services\HidanganFotoService;
 use App\Services\InventoryService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -30,9 +31,9 @@ class CheckExpirationsCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(GeminiService $geminiService, InventoryService $inventoryService): int
+    public function handle(GeminiService $geminiService, InventoryService $inventoryService, HidanganFotoService $fotoService): int
     {
-        $this->info("=== [RESEPIFY SMART EXPIRATION SCHEDULER (UNIVERSITAS BSI)] ===");
+        $this->info("=== [RESEPIFY SMART EXPIRATION SCHEDULER] ===");
         $this->info("Menjalankan pemindaian bahan makanan kulkas mendekati kedaluwarsa...");
 
         $userId = $this->option('user');
@@ -83,7 +84,7 @@ class CheckExpirationsCommand extends Command
                 $recipeTitle = $recipe['title'] ?? 'Resep Penyelamat Bahan Makanan Dapur';
 
                 // Simpan ke Cache/Daftar Resep
-                RecipeCache::create([
+                $resepBaru = RecipeCache::create([
                     'user_id' => $uid,
                     'title' => $recipeTitle,
                     'slug' => Str::slug($recipeTitle) . '-' . Str::random(5),
@@ -102,6 +103,8 @@ class CheckExpirationsCommand extends Command
                     'source' => 'scheduler_rescue_ai',
                     'is_favorite' => false,
                 ]);
+
+                $fotoService->pasang($resepBaru, 6);
 
                 $this->info("  ✓ Berhasil membuat resep penyelamat: \"{$recipeTitle}\"");
             }
