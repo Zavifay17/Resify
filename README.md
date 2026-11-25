@@ -8,25 +8,24 @@ manual otomatis ditautkan saat email Google-nya sama.
 
 ### A. Buat kredensial di Google Cloud Console
 
-1. Buka <https://console.cloud.google.com/> dan pilih (atau buat) project, misalnya
-   **Resepify**.
-2. **APIs & Services → Library** → cari **Google Identity Platforms** → **Enable**
-   (opsional; OAuth bawaan Google sudah bisa dipakai langsung).
-3. **APIs & Services → OAuth consent screen**:
-   - *User Type*: **External** (gratis, siapa pun bisa login).
-   - Isi *App name* (mis. `Resepify`), *User support email*, dan *Developer contact email*.
-   - Pada *Scopes*, tambahkan `openid`, `email`, `profile`.
-   - Klik **Create**.
-4. Selama *Publishing status* masih **Testing**, buka **Audience** →
-   **Test users** → **Add users** → masukkan alamat Gmail yang dipakai untuk uji.
-   Tanpa langkah ini Google menampilkan error `access_denied`.
-5. **APIs & Services → Credentials** → **Create Credentials → OAuth client ID**:
-   - *Application type*: **Web application**.
-   - *Authorized JavaScript origins*: `http://localhost:8000`
-     (dan `http://127.0.0.1:8000` bila perlu).
-   - *Authorized redirect URIs*: `http://localhost:8000/auth/google/callback`
-     — harus **sama persis** dengan URI callback yang ditampilkan di halaman Pengaturan.
-   - Klik **Create**, lalu salin **Client ID** dan **Client Secret**.
+1. Buka <https://console.cloud.google.com/> dan pada pemilih project di bar atas
+   pilih **Resepify** (jangan project lain seperti Agrilens).
+2. Menu kiri **Google Auth Platform → Branding**: isi *App name* `Resepify`,
+   *User support email*, dan *Developer contact email* → **Save**.
+3. **Google Auth Platform → Audience**: pilih *User type* **External** (gratis,
+   siapa pun bisa login).
+4. Selama *Publishing status* masih **Testing**, klik **Add users** dan masukkan
+   alamat Gmail yang dipakai menguji. Tanpa langkah ini Google menolak dengan
+   `access_denied`.
+5. **Google Auth Platform → Clients → Create Clients** → *Application type*
+   **Web application**, nama bebas (mis. `Resepify local`).
+6. Isi **Authorized JavaScript origins** (Add URI): `http://localhost:8000`
+   (tambahkan `http://127.0.0.1:8000` bila perlu).
+7. Isi **Authorized redirect URIs** (Add URI):
+   `http://localhost:8000/auth/google/callback` — harus **sama persis** dengan URI
+   callback yang ditampilkan di halaman Pengaturan.
+8. Klik **Create**, lalu salin **Client ID** dan **Client Secret** yang muncul
+   (atau *Download client IDs*).
 
 ### B. Isi kredensialnya (dua cara)
 

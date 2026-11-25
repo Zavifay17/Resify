@@ -108,6 +108,36 @@ class AuthController extends Controller
     }
 
     /**
+     * Pesan galat Google diterjemahkan ke langkah perbaikan yang konkret,
+     * supaya pengguna awam tahu bagian mana yang salah isi.
+     */
+    private function pesanErrorGoogle(\Throwable $e): string
+    {
+        $pesan = strtolower($e->getMessage());
+
+        if (str_contains($pesan, 'redirect_uri_mismatch') || str_contains($pesan, 'redirect uri')) {
+            return 'Authorized redirect URI di Google Cloud tidak sama persis dengan alamat ini: '
+                . $this->callbackGoogle() . '. Salin ulang alamat tersebut pada kolom Authorized redirect URIs lalu simpan.';
+        }
+
+        if (str_contains($pesan, 'invalid_client') || str_contains($pesan, 'unauthorized_client')) {
+            return 'Client ID atau Client Secret tidak dikenali. Tempel ulang keduanya pada Pengaturan > Login Google, '
+                . 'pastikan berasal dari client tipe Web application di project yang sama.';
+        }
+
+        if (str_contains($pesan, 'access_denied') || str_contains($pesan, 'invalid_grant') || str_contains($pesan, 'consent')) {
+            return 'Google menolak akses. Bila status aplikasi masih Testing, tambahkan alamat email Anda pada '
+                . 'Google Auth Platform > Audience > Test users, lalu coba masuk lagi.';
+        }
+
+        if ($e instanceof \Laravel\Socialite\Two\InvalidStateException) {
+            return 'Sesi verifikasi Google berakhir (halaman dibuka terlalu lama atau tab diganti). Silakan klik tombol Google sekali lagi.';
+        }
+
+        return 'Google sedang tidak dapat dihubungi. Silakan masuk dengan email atau ulangi beberapa saat lagi.';
+    }
+
+    /**
      * Arahkan pengguna ke halaman autentikasi Google.
      */
     public function googleRedirect()
@@ -122,7 +152,7 @@ class AuthController extends Controller
                 ->redirectUrl($this->callbackGoogle())
                 ->redirect();
         } catch (\Throwable $e) {
-            return redirect()->route('login')->with('error', 'Google sedang tidak dapat dihubungi. Silakan masuk dengan email atau ulangi beberapa saat lagi.');
+            return redirect()->route('login')->with('error', $this->pesanErrorGoogle($e));
         }
     }
 
@@ -137,7 +167,7 @@ class AuthController extends Controller
                 ->redirectUrl($this->callbackGoogle())
                 ->user();
         } catch (\Throwable $e) {
-            return redirect()->route('login')->with('error', 'Gagal masuk dengan Google. Silakan coba lagi.');
+            return redirect()->route('login')->with('error', $this->pesanErrorGoogle($e));
         }
 
         $email = $googleUser->getEmail();

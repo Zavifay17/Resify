@@ -183,4 +183,37 @@ class AutentikasiGoogleTest extends TestCase
         $this->assertSame('google-id-5566', $lama->fresh()->google_id);
         $this->assertSame(1, User::where('email', 'sudah.punya@gmail.com')->count());
     }
+
+    public function test_galat_redirect_uri_mismatch_menunjukkan_uri_callback_yang_benar(): void
+    {
+        $this->isiKredensialGoogle();
+
+        Socialite::shouldReceive('driver->scopes->redirectUrl->user')
+            ->andThrow(new \RuntimeException('Client error: `POST https://oauth2.googleapis.com/token` resulted in a `400 Bad Request` response: redirect_uri_mismatch'));
+
+        $this->get(route('google.callback'))->assertRedirect(route('login'));
+        $this->assertStringContainsString('/auth/google/callback', (string) session('error'));
+    }
+
+    public function test_galat_klien_tidak_dikenali_menyebut_client_secret(): void
+    {
+        $this->isiKredensialGoogle();
+
+        Socialite::shouldReceive('driver->scopes->redirectUrl->user')
+            ->andThrow(new \RuntimeException('invalid_client'));
+
+        $this->get(route('google.callback'))->assertRedirect(route('login'));
+        $this->assertStringContainsString('Client Secret', (string) session('error'));
+    }
+
+    public function test_galat_penolakan_akun_menyebut_test_users(): void
+    {
+        $this->isiKredensialGoogle();
+
+        Socialite::shouldReceive('driver->scopes->redirectUrl->user')
+            ->andThrow(new \RuntimeException('access_denied'));
+
+        $this->get(route('google.callback'))->assertRedirect(route('login'));
+        $this->assertStringContainsString('Test users', (string) session('error'));
+    }
 }

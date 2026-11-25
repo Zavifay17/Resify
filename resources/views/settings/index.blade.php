@@ -449,16 +449,19 @@
                     <div class="body">
                         <strong>Cara membuat API-nya</strong>
                         <ol class="text-sm mt-8 mb-0">
-                            <li>Buka <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console &rarr; APIs &amp; Services &rarr; Credentials</a>, pilih project Anda.</li>
-                            <li>Menu <em>Library</em> &rarr; cari <strong>Google Identity Platforms</strong> &rarr; <strong>Enable</strong> (opsional; OAuth dasar sudah cukup).</li>
-                            <li><em>OAuth consent screen</em> &rarr; pilih <strong>External</strong>, isi nama aplikasi dan email pendukung, tambahkan scope
-                                <span class="mono">openid</span>, <span class="mono">email</span>, <span class="mono">profile</span>, lalu <strong>Create</strong>.</li>
-                            <li>Selama status masih <em>Testing</em>, tambahkan alamat Gmail Anda pada <strong>Test users</strong> supaya tidak ditolak.</li>
-                            <li><em>Credentials</em> &rarr; <strong>Create Credentials &rarr; OAuth client ID</strong>, tipe <strong>Web application</strong>.</li>
-                            <li><em>Authorized JavaScript origins</em>: <span class="mono">{{ rtrim(url('/'), '/') }}</span></li>
-                            <li><em>Authorized redirect URIs</em>: <span class="mono">{{ $googleCallback }}</span> &rarr; <strong>Create</strong>.</li>
-                            <li>Salin <strong>Client ID</strong> dan <strong>Client Secret</strong> ke dua kolom di atas, klik <strong>Simpan konfigurasi API</strong>, lalu coba tombol Google di halaman Masuk.</li>
+                            <li>Buka <a href="https://console.cloud.google.com/auth/overview?project=resepify" target="_blank" rel="noopener">Google Cloud Console</a>, lalu di deretan atas pilih project <strong>Resepify</strong> (bukan Agrilens).</li>
+                            <li>Menu kiri <strong>Google Auth Platform &rarr; Branding</strong>: isi <em>App name</em> <span class="mono">Resepify</span>, <em>User support email</em>, dan <em>Developer contact email</em> dengan email Anda &rarr; <strong>Save</strong>.</li>
+                            <li><strong>Google Auth Platform &rarr; Audience</strong>: biarkan <em>User type</em> <strong>External</strong>. Selama statusnya masih <em>Testing</em>, klik <strong>Add users</strong> dan masukkan alamat Gmail yang akan dipakai login &mdash; tanpa ini Google menolak dengan pesan <span class="mono">access_denied</span>.</li>
+                            <li><strong>Google Auth Platform &rarr; Clients</strong> &rarr; tombol <strong>Create Clients</strong> &rarr; <em>Application type</em>: <strong>Web application</strong>, beri nama <span class="mono">Resepify local</span>.</li>
+                            <li>Isi <strong>Authorized JavaScript origins</strong> (Add URI): <span class="mono">{{ rtrim(url('/'), '/') }}</span></li>
+                            <li>Isi <strong>Authorized redirect URIs</strong> (Add URI): tempel persis nilai pada kolom baca-saja di atas, lalu <strong>Create</strong>.</li>
+                            <li>Akan muncul <strong>Client ID</strong> dan <strong>Client Secret</strong>. Salin keduanya (atau <em>Download client IDs</em> untuk menyimpan .txt) lalu tempel ke dua kolom di atas &rarr; <strong>Simpan konfigurasi API</strong>.</li>
+                            <li>Selesai: tombol Google langsung muncul di halaman Masuk &amp; Daftar. Klik sekali, pilih akun Gmail tadi, dan akun Anda tercatat otomatis.</li>
                         </ol>
+                        <div class="hint mt-12">
+                            Butuh bantuan? Kirim saja <strong>Client ID</strong>-nya ke saya (yang ini bukan rahasia).
+                            Untuk <strong>Client Secret</strong>, tempel sendiri di kolom di atas &mdash; tidak perlu dikirim ke mana-mana.
+                        </div>
                     </div>
                 </div>
             </div>
