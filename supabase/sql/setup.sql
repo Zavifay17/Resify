@@ -92,11 +92,18 @@ create table if not exists public.kitchen_inventories (
     status           text not null default 'safe',
     notes            text,
     photo_path       text,
+    created_at       timestamptz,
+    updated_at       timestamptz,
     synced_at        timestamptz
 );
 
 -- Bahan kedaluwarsa lebih dari 1 hari diarsipkan: tetap terlihat, tidak dipakai generator resep.
 alter table public.kitchen_inventories add column if not exists archived_at timestamptz;
+
+-- Project yang sudah lebih dulu dibuat belum punya kolom waktu ini; tanpa kedua kolom
+-- ini, sinkronisasi data lokal ditolak PostgREST karena kolom tidak ditemukan.
+alter table public.kitchen_inventories add column if not exists created_at timestamptz;
+alter table public.kitchen_inventories add column if not exists updated_at timestamptz;
 
 -- Tipe kunci disamakan dengan tabel induk (bigint) supaya relasi bisa dibuat.
 alter table public.kitchen_inventories alter column user_id type bigint;

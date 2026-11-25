@@ -204,4 +204,52 @@ class SupabaseSkemaCloudTest extends TestCase
         $this->assertLessThan($posisiItem, $posisiInduk);
         $this->assertLessThan($posisiItem, $posisiBahan);
     }
+
+    public function test_batch_melewati_kolom_yang_belum_ada_di_cloud_lalu_mencoba_lagi(): void
+    {
+        Http::fake([
+            '*uji-project.supabase.co/rest/v1/kitchen_inventories*' => Http::sequence()
+                ->push([
+                    'code' => 'PGRST204',
+                    'message' => "Could not find the 'created_at' column of 'kitchen_inventories' in the schema cache",
+                ], 400)
+                ->push([], 201),
+        ]);
+
+        $hasil = $this->upsertBatchUji('kitchen_inventories', [
+            ['id' => 1, 'item_name' => 'Ayam Kampung', 'created_at' => '2026-11-01 08:00:00'],
+            ['id' => 2, 'item_name' => 'Kentang', 'created_at' => '2026-11-02 08:00:00'],
+        ]);
+
+        $this->assertTrue($hasil['ok'], $hasil['pesan']);
+        $this->assertSame(2, $hasil['terkirim']);
+        $this->assertStringContainsString('created_at', $hasil['pesan']);
+
+        $batchKedua = json_decode(collect(Http::recorded())->last()[0]->body(), true);
+        $this->assertArrayNotHasKey('created_at', $batchKedua[0]);
+        $this->assertSame('Ayam Kampung', $batchKedua[0]['item_name']);
+    }
+
+    public function test_batch_tetap_dilaporkan_gagal_saat_penyebabnya_bukan_kolom(): void
+    {
+        Http::fake([
+            '*uji-project.supabase.co/rest/v1/ai_logs*' => Http::response([
+                'code' => '23503',
+                'message' => 'insert or update on table "ai_logs" violates foreign key constraint',
+            ], 409),
+        ]);
+
+        $hasil = $this->upsertBatchUji('ai_logs', [['id' => 1, 'user_id' => 999999]]);
+
+        $this->assertFalse($hasil['ok']);
+        $this->assertStringContainsString('HTTP 409', $hasil['pesan']);
+        $this->assertCount(1, Http::recorded());
+    }
+
+    private function upsertBatchUji(string $tabel, array $baris): array
+    {
+        return (function (string $tabel, array $baris) {
+            return $this->upsertBatch($tabel, $baris);
+        })->call($this->layanan, $tabel, $baris);
+    }
 }

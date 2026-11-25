@@ -108,6 +108,10 @@
     hasilKirim: null,
     perluToken: {{ $perluToken ? 'true' : 'false' }},
 
+    get tabelBelumAda() {
+        return this.tabelCloud.filter(t => !t.ada).map(t => t.tabel);
+    },
+
     kirimJson(route, payload = {}) {
         return fetch(route, {
             method: 'POST',
@@ -631,6 +635,22 @@
                 </template>
             </div>
 
+            <template x-if="!cekTabel && tabelCloud.length > 0 && tabelBelumAda.length === 0">
+                <div class="hint">
+                    Sembilan tabel sudah terbentuk di cloud, jadi tombol <em>Bangun semua tabel otomatis</em> tidak diperlukan
+                    lagi (dan token kelolaan tidak dibutuhkan). Tekan <strong>Sinkronkan data cloud</strong> setiap kali ada
+                    data baru di MySQL lokal.
+                </div>
+            </template>
+
+            <template x-if="tabelBelumAda.length > 0">
+                <div class="hint">
+                    Tabel yang belum terbentuk di cloud:
+                    <span class="mono" x-text="tabelBelumAda.join(', ')"></span>.
+                    Jalankan script SQL Setup lalu tekan <strong>Sinkronkan data cloud</strong>.
+                </div>
+            </template>
+
             <div class="flex-center flex-wrap gap-8">
                 <button type="button" class="btn btn-primary btn-sm" @click="bangunSkema()" :disabled="membangunSkema">
                     <template x-if="!membangunSkema">
@@ -683,7 +703,10 @@
                         <strong x-text="hasilKirim.message"></strong>
                         <div class="text-sm mono mt-4">
                             <template x-for="r in (hasilKirim.tabel || [])" :key="r.tabel">
-                                <span x-text="r.tabel + ': ' + r.terkirim + '/' + r.total"></span><br>
+                                <span>
+                                    <span x-text="r.tabel + ': ' + r.terkirim + '/' + r.total"></span>
+                                    <span x-show="!r.ok" style="color:var(--danger)" x-text="' &leftarrow; ' + r.pesan"></span>
+                                </span><br>
                             </template>
                         </div>
                     </div>

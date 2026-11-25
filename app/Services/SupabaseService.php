@@ -624,19 +624,39 @@ class SupabaseService
             return ['ok' => true, 'terkirim' => 0, 'pesan' => 'Tidak ada baris untuk dikirim.'];
         }
 
-        $key = $this->keyUntukTulis();
+        $chunks = array_chunk($baris, $ukuranChunk);
         $terkirim = 0;
+        $dilewati = [];
 
         try {
-            foreach (array_chunk($baris, $ukuranChunk) as $chunk) {
-                $respon = Http::timeout(60)
-                    ->withHeaders([
-                        'apikey' => $key,
-                        'Authorization' => 'Bearer ' . $key,
-                        'Content-Type' => 'application/json',
-                        'Prefer' => 'resolution=merge-duplicates,return=minimal',
-                    ])
-                    ->post("{$this->url}/rest/v1/{$tabel}", $chunk);
+            foreach ($chunks as $index => $chunk) {
+                $respon = $this->kirimChunk($tabel, $chunk);
+                $percobaan = 0;
+
+                // Skema cloud bisa tertinggal dari MySQL (mis. kolom baru belum dibuat).
+                // Kolom yang tidak dikenal Supabase menolak seluruh batch, jadi kolom itu
+                // dilewati dari semua baris lalu permintaan diulang.
+                while (!$respon->successful() && $percobaan < 4) {
+                    $asing = $this->kolomAsing($respon->body());
+
+                    if ($asing === []) {
+                        break;
+                    }
+
+                    foreach ($chunks as &$sisa) {
+                        foreach ($sisa as &$barisSisa) {
+                            foreach ($asing as $kolom) {
+                                unset($barisSisa[$kolom]);
+                            }
+                        }
+                        unset($barisSisa);
+                    }
+                    unset($sisa);
+
+                    $dilewati = array_values(array_unique(array_merge($dilewati, $asing)));
+                    $percobaan++;
+                    $respon = $this->kirimChunk($tabel, $chunks[$index]);
+                }
 
                 if (!$respon->successful()) {
                     return [
@@ -646,14 +666,46 @@ class SupabaseService
                     ];
                 }
 
-                $terkirim += count($chunk);
+                $terkirim += count($chunks[$index]);
             }
 
-            return ['ok' => true, 'terkirim' => $terkirim, 'pesan' => 'Terkirim ' . $terkirim . ' baris.'];
+            $pesan = 'Terkirim ' . $terkirim . ' baris.';
+            if ($dilewati !== []) {
+                $pesan .= ' Kolom ' . implode(', ', $dilewati) . ' belum ada di cloud (jalankan setup.sql) jadi dilewati.';
+            }
+
+            return ['ok' => true, 'terkirim' => $terkirim, 'pesan' => $pesan];
         } catch (\Throwable $e) {
             Log::warning('Sinkronisasi massal ' . $tabel . ' gagal: ' . $e->getMessage());
             return ['ok' => false, 'terkirim' => $terkirim, 'pesan' => $e->getMessage()];
         }
+    }
+
+    protected function kirimChunk(string $tabel, array $chunk)
+    {
+        $key = $this->keyUntukTulis();
+
+        return Http::timeout(60)
+            ->withHeaders([
+                'apikey' => $key,
+                'Authorization' => 'Bearer ' . $key,
+                'Content-Type' => 'application/json',
+                'Prefer' => 'resolution=merge-duplicates,return=minimal',
+            ])
+            ->post("{$this->url}/rest/v1/{$tabel}", $chunk);
+    }
+
+    /**
+     * Nama kolom yang tidak dikenal Supabase, bila memang itu penyebab gagalnya request.
+     */
+    protected function kolomAsing(string $body): array
+    {
+        $pesan = (string) (json_decode($body, true)['message'] ?? '');
+
+        preg_match_all("/Could not find the '([a-z0-9_]+)' column/i", $pesan, $cocok);
+        preg_match_all('/column "?([a-z0-9_]+)"? does not exist/i', $pesan, $cocok2);
+
+        return array_values(array_unique(array_merge($cocok[1] ?? [], $cocok2[1] ?? [])));
     }
 
     /**
