@@ -39,6 +39,10 @@
         <div class="foot">
             Tugas Akhir Program Studi Rekayasa Perangkat Lunak<br>
             Universitas Bina Sarana Informatika (UBSI)
+            <div class="credit">
+                Latar foto bahan masakan:
+                <a href="https://unsplash.com/@trapnation" target="_blank" rel="noopener">Andre Benz</a> / Unsplash, lisensi bebas.
+            </div>
         </div>
     </aside>
 

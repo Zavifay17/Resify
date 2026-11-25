@@ -75,5 +75,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [SettingController::class, 'update'])->name('update');
         Route::post('/test-gemini', [SettingController::class, 'testGemini'])->name('test-gemini');
         Route::post('/test-supabase', [SettingController::class, 'testSupabase'])->name('test-supabase');
+        Route::post('/supabase/tables', [SettingController::class, 'tabelCloud'])->name('supabase.tables');
+        Route::post('/supabase/build', [SettingController::class, 'bangunSkema'])->name('supabase.build');
+        Route::post('/supabase/sync-data', [SettingController::class, 'sinkronkanData'])->name('supabase.sync-data');
     });
 });

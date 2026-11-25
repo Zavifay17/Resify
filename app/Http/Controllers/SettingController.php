@@ -39,6 +39,7 @@ class SettingController extends Controller
         $campusName = SystemSetting::get('campus_name', 'Universitas Bina Sarana Informatika');
         $studentNim = $user->nim ?? SystemSetting::get('student_nim', '12210889');
         $studentName = $user->name;
+        $perluToken = !$this->supabaseService->punyaTokenKelola();
 
         return view('settings.index', compact(
             'user',
@@ -51,7 +52,8 @@ class SettingController extends Controller
             'supabaseRef',
             'campusName',
             'studentNim',
-            'studentName'
+            'studentName',
+            'perluToken'
         ));
     }
 
@@ -111,6 +113,38 @@ class SettingController extends Controller
         $key = $request->input('key');
 
         $result = $this->supabaseService->testConnection($url, $key);
+        return response()->json($result);
+    }
+
+    /**
+     * Status tabel cloud (sudah terbentuk atau belum) untuk kartu Skema & ERD.
+     */
+    public function tabelCloud()
+    {
+        return response()->json([
+            'configured' => $this->supabaseService->isConfigured(),
+            'perlu_token' => !$this->supabaseService->punyaTokenKelola(),
+            'tabel' => $this->supabaseService->daftarTabelCloud(),
+        ]);
+    }
+
+    /**
+     * Jalankan supabase/sql/setup.sql dari aplikasi (butuh SUPABASE_ACCESS_TOKEN).
+     */
+    public function bangunSkema()
+    {
+        $result = $this->supabaseService->bangunSkema();
+
+        return response()->json($result);
+    }
+
+    /**
+     * Kirim seluruh data lokal ke cloud supaya ERD tidak hanya berisi kerangka.
+     */
+    public function sinkronkanData()
+    {
+        $result = $this->supabaseService->sinkronkanSemuaData();
+
         return response()->json($result);
     }
 }

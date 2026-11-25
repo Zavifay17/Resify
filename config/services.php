@@ -51,6 +51,9 @@ return [
         'key' => env('SUPABASE_KEY'),
         'service_key' => env('SUPABASE_SERVICE_KEY'),
         'bucket' => env('SUPABASE_BUCKET', 'ingredients'),
+        // Personal Access Token (Supabase CLI -> Access Tokens) untuk menjalankan
+        // SQL setup dari aplikasi. Opsional dan hanya dipakai sisi server.
+        'dashboard_token' => env('SUPABASE_ACCESS_TOKEN', ''),
     ],
 
     // Google OAuth via Laravel Socialite

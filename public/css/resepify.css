@@ -684,15 +684,33 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ------------------------------------------------------------------ auth */
-.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
-.auth-aside { background: var(--navy); color: #e8eef6; padding: 46px 46px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1.02fr 1fr; }
+.auth-aside {
+    color: #eaf1f8; padding: 46px 46px; display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; isolation: isolate; overflow: hidden;
+    background: var(--navy) url("/images/auth/bahan-dapur-unsplash.jpg") center / cover no-repeat;
+}
+/* Layer gradasi supaya teks tetap terbaca di atas foto bahan masakan */
+.auth-aside::before {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(152deg, rgba(10,24,36,.93) 0%, rgba(20,48,80,.68) 44%, rgba(8,18,28,.94) 100%);
+}
 .auth-aside .brand-mark { background: var(--brand); }
-.auth-aside h1 { color: #fff; font-size: 27px; line-height: 1.3; max-width: 22ch; }
-.auth-aside p { color: #b9c8da; font-size: 14.5px; max-width: 44ch; }
-.auth-aside ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
-.auth-aside li { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; color: #cbd8e6; }
+.auth-aside h1 {
+    color: #fff; font-size: 29px; line-height: 1.28; max-width: 21ch; font-weight: 800;
+    text-shadow: 0 2px 14px rgba(4,12,20,.55);
+}
+.auth-aside p { color: #d6e2ef; font-size: 15px; max-width: 42ch; text-shadow: 0 1px 8px rgba(4,12,20,.5); }
+.auth-aside ul {
+    list-style: none; margin: 0; padding: 16px 18px; display: grid; gap: 11px;
+    background: rgba(9,20,31,.42); border: 1px solid rgba(255,255,255,.16); border-radius: 14px;
+    backdrop-filter: blur(7px); box-shadow: 0 10px 30px rgba(4,12,20,.28);
+}
+.auth-aside li { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; color: #dbe6f1; }
 .auth-aside li svg { width: 16px; height: 16px; color: var(--brand); flex: none; margin-top: 3px; }
-.auth-aside .foot { font-size: 12.5px; color: #90a6bd; }
+.auth-aside .foot { font-size: 12.5px; color: #c2d2e2; text-shadow: 0 1px 6px rgba(4,12,20,.6); }
+.auth-aside .credit { margin-top: 8px; font-size: 11px; color: rgba(194,210,226,.75); }
+.auth-aside .credit a { color: rgba(224,235,245,.85); text-decoration: underline; }
 .auth-main { display: flex; align-items: center; justify-content: center; padding: 40px 20px; background: var(--bg); }
 .auth-card { width: 100%; max-width: 402px; }
 
@@ -724,8 +742,12 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
     .burger { display: inline-flex; }
     .nav-mobile.is-open { display: block; }
     .grid-2, .grid-3 { grid-template-columns: minmax(0, 1fr); }
-    .auth-shell { grid-template-columns: minmax(0, 1fr); }
-    .auth-aside { display: none; }
+    .auth-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+    .auth-aside { padding: 22px 20px 18px; gap: 14px; }
+    .auth-aside h1 { font-size: 21px; max-width: 24ch; }
+    .auth-aside p { font-size: 13.5px; max-width: 40ch; }
+    .auth-aside ul, .auth-aside .credit { display: none; }
+    .auth-aside .foot { font-size: 11.5px; }
     .pick-list { grid-template-columns: minmax(0, 1fr); }
     .kv { grid-template-columns: minmax(0, 1fr); gap: 2px 0; }
     .kv dt { margin-top: 8px; }

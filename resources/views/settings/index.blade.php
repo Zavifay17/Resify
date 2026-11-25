@@ -97,6 +97,70 @@
             this.testingSupabase = false;
             this.supabaseResult = { success: false, message: 'Gagal menghubungi server lokal.' };
         });
+    },
+
+    // ===== Skema cloud & ERD =====
+    tabelCloud: [],
+    cekTabel: false,
+    membangunSkema: false,
+    hasilBangun: null,
+    mengirimData: false,
+    hasilKirim: null,
+    perluToken: {{ $perluToken ? 'true' : 'false' }},
+
+    kirimJson(route, payload = {}) {
+        return fetch(route, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+            },
+            body: JSON.stringify(payload)
+        }).then(res => res.json());
+    },
+
+    muatTabelCloud() {
+        this.cekTabel = true;
+
+        this.kirimJson('{{ route('settings.supabase.tables') }}')
+            .then(res => {
+                this.tabelCloud = res.tabel || [];
+                this.perluToken = !!res.perlu_token;
+            })
+            .catch(() => this.tabelCloud = [])
+            .finally(() => this.cekTabel = false);
+    },
+
+    bangunSkema() {
+        this.membangunSkema = true;
+        this.hasilBangun = null;
+
+        this.kirimJson('{{ route('settings.supabase.build') }}')
+            .then(res => {
+                this.hasilBangun = res;
+                if (res.tabel) this.tabelCloud = res.tabel;
+                lucide.createIcons();
+            })
+            .catch(() => this.hasilBangun = { success: false, message: 'Gagal menghubungi server lokal.' })
+            .finally(() => this.membangunSkema = false);
+    },
+
+    sinkronkanData() {
+        this.mengirimData = true;
+        this.hasilKirim = null;
+
+        this.kirimJson('{{ route('settings.supabase.sync-data') }}')
+            .then(res => {
+                this.hasilKirim = res;
+                this.muatTabelCloud();
+                lucide.createIcons();
+            })
+            .catch(() => this.hasilKirim = { success: false, message: 'Gagal menghubungi server lokal.' })
+            .finally(() => this.mengirimData = false);
+    },
+
+    init() {
+        if ('{{ $supabaseUrl }}' !== '') this.muatTabelCloud();
     }
 }">
 
@@ -473,6 +537,128 @@
             </div>
         </section>
     </form>
+
+    <div class="card">
+        <div class="card-head">
+            <h3 class="mb-0">
+                <i data-lucide="database"></i>
+                Skema Cloud &amp; ERD Supabase
+            </h3>
+            <button type="button" class="btn btn-secondary btn-sm" @click="muatTabelCloud()" :disabled="cekTabel">
+                <i data-lucide="refresh-cw"></i> Muat status tabel
+            </button>
+        </div>
+
+        <div class="card-body tight stack-12">
+            <p class="text-sm text-muted mb-0">
+                Cloud Supabase mencerminkan <span class="strong mono">9</span> tabel MySQL lokal beserta relasinya,
+                sehingga halaman <span class="mono">Schema Visualizer</span> menampilkan ERD yang utuh
+                (bukan hanya tabel <span class="mono">kitchen_inventories</span>).
+            </p>
+
+            <div class="flex-center flex-wrap gap-8">
+                <template x-if="cekTabel">
+                    <span class="hint">Memeriksa tabel di Supabase Cloud...</span>
+                </template>
+
+                <template x-if="!cekTabel && tabelCloud.length === 0">
+                    <span class="hint">Status tabel belum terbaca. Isi URL &amp; key Supabase di atas, lalu muat status.</span>
+                </template>
+
+                <template x-for="t in tabelCloud" :key="t.tabel">
+                    <span class="chip" :style="t.ada ? 'border-color:var(--brand)' : 'opacity:.62'">
+                        <span class="mono" x-text="t.tabel"></span>
+                        <span class="strong" x-text="t.ada ? ('✓ ' + (t.baris ?? 0) + ' baris') : 'belum ada'"></span>
+                    </span>
+                </template>
+            </div>
+
+            <div class="flex-center flex-wrap gap-8">
+                <button type="button" class="btn btn-primary btn-sm" @click="bangunSkema()" :disabled="membangunSkema">
+                    <template x-if="!membangunSkema">
+                        <span class="flex-center gap-4"><i data-lucide="hammer"></i> Bangun semua tabel otomatis</span>
+                    </template>
+                    <template x-if="membangunSkema">
+                        <span class="flex-center gap-4">
+                            <span class="spinner" style="border-color:#cfd6dd;border-top-color:var(--brand)"></span>
+                            Membangun skema di cloud...
+                        </span>
+                    </template>
+                </button>
+
+                <button type="button" class="btn btn-secondary btn-sm" @click="sinkronkanData()" :disabled="mengirimData">
+                    <template x-if="!mengirimData">
+                        <span class="flex-center gap-4"><i data-lucide="upload-cloud"></i> Sinkronkan data cloud</span>
+                    </template>
+                    <template x-if="mengirimData">
+                        <span class="flex-center gap-4">
+                            <span class="spinner" style="border-color:#cfd6dd;border-top-color:var(--brand)"></span>
+                            Mengirim data lokal...
+                        </span>
+                    </template>
+                </button>
+            </div>
+
+            <template x-if="perluToken">
+                <div class="hint">
+                    Tombol otomatis memakai <span class="mono">SUPABASE_ACCESS_TOKEN</span> di <span class="mono">.env</span>
+                    (buat di halaman Access Tokens Supabase). Tanpa token, pakai cara manual di bawah.
+                </div>
+            </template>
+
+            <template x-if="hasilBangun">
+                <div class="alert" :class="hasilBangun.success ? 'alert-ok' : 'alert-danger'">
+                    <i :data-lucide="hasilBangun.success ? 'check-circle-2' : 'alert-circle'"></i>
+                    <div class="body">
+                        <strong x-text="hasilBangun.message"></strong>
+                        <template x-if="hasilBangun.success">
+                            <span class="text-sm">Buka <span class="mono">Schema Visualizer</span> Supabase untuk melihat ERD-nya.</span>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="hasilKirim">
+                <div class="alert" :class="hasilKirim.success ? 'alert-ok' : 'alert-danger'">
+                    <i :data-lucide="hasilKirim.success ? 'check-circle-2' : 'alert-circle'"></i>
+                    <div class="body">
+                        <strong x-text="hasilKirim.message"></strong>
+                        <div class="text-sm mono mt-4">
+                            <template x-for="r in (hasilKirim.tabel || [])" :key="r.tabel">
+                                <span x-text="r.tabel + ': ' + r.terkirim + '/' + r.total"></span><br>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <div class="card is-flat">
+                <div class="card-body tight stack-12">
+                    <div class="strong text-sm flex-center gap-6" style="color:var(--brand-dark)">
+                        <i data-lucide="wrench" style="width:16px;height:16px"></i>
+                        <span>Cara manual (tanpa token, ± 1 menit):</span>
+                    </div>
+                    <ol class="text-sm text-muted stack-6" style="padding-left:18px;margin:0">
+                        <li>Tekan <strong>Salin Script SQL Setup</strong> di bawah.</li>
+                        <li>Buka <strong>SQL Editor</strong> project Supabase Anda di tab baru.</li>
+                        <li>Paste (<span class="mono">Ctrl + V</span>) lalu klik <strong>RUN</strong>. Skrip boleh dijalankan berulang kali.</li>
+                        <li>Kembali ke sini, klik <strong>Sinkronkan data cloud</strong> agar ERD terisi baris, lalu <strong>Muat status tabel</strong>.</li>
+                    </ol>
+                    <div class="flex-center flex-wrap gap-8 pt-4">
+                        <button type="button" class="btn btn-secondary btn-sm" @click="copySetupSql()">
+                            <i data-lucide="copy"></i> <span x-text="sqlCopied ? 'Script Berhasil Disalin!' : 'Salin Script SQL Setup'"></span>
+                        </button>
+                        <a :href="'https://supabase.com/dashboard/project/' + getProjectRef() + '/sql/new'" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+                            <i data-lucide="external-link"></i> Buka SQL Editor Supabase
+                        </a>
+                        <a :href="'https://supabase.com/dashboard/project/' + getProjectRef() + '/database/schemas'" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+                            <i data-lucide="network"></i> Buka ERD Schema Visualizer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="card is-flat">
         <div class="card-body tight flex-between flex-wrap">
